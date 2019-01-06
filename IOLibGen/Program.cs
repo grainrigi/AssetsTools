@@ -11,6 +11,7 @@ namespace IOLibGen {
         static void Main(string[] args) {
             AssemblyHelper assem = new AssemblyHelper("IOLib");
             assem.CreateClass("UnityBinaryReader", UnityBinaryReaderBuilder.Builder);
+            assem.CreateClass("UnityBinaryWriter", UnityBinaryWriterBuilder.Builder);
             assem.Save();
         }
     }

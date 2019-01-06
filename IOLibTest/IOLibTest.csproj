@@ -54,6 +54,7 @@
   <ItemGroup>
     <Compile Include="UnityBinaryReaderTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UnityBinaryWriterTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

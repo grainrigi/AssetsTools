@@ -56,6 +56,7 @@ namespace IOLibGen {
                 method.DefineGenericParameters("T")[0];
             T.SetGenericParameterAttributes(GenericParameterAttributes.NotNullableValueTypeConstraint);
             method.SetParameters(T.MakeArrayType());
+            method.DefineParameter(1, ParameterAttributes.None, "array");
             emitter(method.GetILGenerator(), T);
             return method;
         }
