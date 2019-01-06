@@ -60,13 +60,13 @@ namespace IOLibTest {
         }
 
         [TestMethod]
-        public void ReadShortLE() {
+        public void ReadShort() {
             UnityBinaryReader r = new UnityBinaryReader(TestData);
 
-            Assert.AreEqual<short>(0x2301, r.ReadShortLE());
-            Assert.AreEqual<short>(0x6745, r.ReadShortLE());
-            Assert.AreEqual<short>(unchecked((short)0xAB89), r.ReadShortLE());
-            Assert.AreEqual<short>(unchecked((short)0xEFCD), r.ReadShortLE());
+            Assert.AreEqual<short>(0x2301, r.ReadShort());
+            Assert.AreEqual<short>(0x6745, r.ReadShort());
+            Assert.AreEqual<short>(unchecked((short)0xAB89), r.ReadShort());
+            Assert.AreEqual<short>(unchecked((short)0xEFCD), r.ReadShort());
         }
 
         [TestMethod]
@@ -80,14 +80,14 @@ namespace IOLibTest {
         }
 
         [TestMethod]
-        public void ReadUShortLE() {
+        public void ReadUShort() {
             UnityBinaryReader r = new UnityBinaryReader(TestData);
 
             // r_bin
-            Assert.AreEqual<ushort>(0x2301, r.ReadUShortLE());
-            Assert.AreEqual<ushort>(0x6745, r.ReadUShortLE());
-            Assert.AreEqual<ushort>(0xAB89, r.ReadUShortLE());
-            Assert.AreEqual<ushort>(0xEFCD, r.ReadUShortLE());
+            Assert.AreEqual<ushort>(0x2301, r.ReadUShort());
+            Assert.AreEqual<ushort>(0x6745, r.ReadUShort());
+            Assert.AreEqual<ushort>(0xAB89, r.ReadUShort());
+            Assert.AreEqual<ushort>(0xEFCD, r.ReadUShort());
         }
 
         [TestMethod]
@@ -101,11 +101,11 @@ namespace IOLibTest {
         }
 
         [TestMethod]
-        public void ReadIntLE() {
+        public void ReadInt() {
             UnityBinaryReader r = new UnityBinaryReader(TestData);
 
-            Assert.AreEqual<int>(0x67452301, r.ReadIntLE());
-            Assert.AreEqual<int>(unchecked((int)0xEFCDAB89), r.ReadIntLE());
+            Assert.AreEqual<int>(0x67452301, r.ReadInt());
+            Assert.AreEqual<int>(unchecked((int)0xEFCDAB89), r.ReadInt());
         }
 
         [TestMethod]
@@ -117,11 +117,11 @@ namespace IOLibTest {
         }
 
         [TestMethod]
-        public void ReadUIntLE() {
+        public void ReadUInt() {
             UnityBinaryReader r = new UnityBinaryReader(TestData);
 
-            Assert.AreEqual<uint>(0x67452301, r.ReadUIntLE());
-            Assert.AreEqual<uint>(0xEFCDAB89, r.ReadUIntLE());
+            Assert.AreEqual<uint>(0x67452301, r.ReadUInt());
+            Assert.AreEqual<uint>(0xEFCDAB89, r.ReadUInt());
         }
 
         [TestMethod]
@@ -133,11 +133,11 @@ namespace IOLibTest {
         }
 
         [TestMethod]
-        public void ReadLongLE() {
+        public void ReadLong() {
             UnityBinaryReader r = new UnityBinaryReader(TestData);
 
             // r_bin
-            Assert.AreEqual<long>(unchecked((long)0xEFCDAB8967452301), r.ReadLongLE());
+            Assert.AreEqual<long>(unchecked((long)0xEFCDAB8967452301), r.ReadLong());
             // Forward Test
             Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadByte(); });
         }
@@ -152,10 +152,10 @@ namespace IOLibTest {
         }
 
         [TestMethod]
-        public void ReadULongLE() {
+        public void ReadULong() {
             UnityBinaryReader r = new UnityBinaryReader(TestData);
 
-            Assert.AreEqual<ulong>(0xEFCDAB8967452301, r.ReadULongLE());
+            Assert.AreEqual<ulong>(0xEFCDAB8967452301, r.ReadULong());
             // Forward Test
             Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadByte(); });
         }
@@ -170,10 +170,10 @@ namespace IOLibTest {
         }
 
         [TestMethod]
-        public void ReadSingleLE() {
+        public void ReadSingle() {
             UnityBinaryReader r = new UnityBinaryReader(TestFloatBytes);
 
-            Assert.AreEqual<float>(TestFloat, r.ReadFloatLE());
+            Assert.AreEqual<float>(TestFloat, r.ReadFloat());
             // Forward Test
             Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadByte(); });
         }
@@ -190,10 +190,10 @@ namespace IOLibTest {
         }
 
         [TestMethod]
-        public void ReadDoubleLE() {
+        public void ReadDouble() {
             UnityBinaryReader r = new UnityBinaryReader(TestDoubleBytes);
 
-            Assert.AreEqual<double>(TestDouble, r.ReadDoubleLE());
+            Assert.AreEqual<double>(TestDouble, r.ReadDouble());
             // Forward Test
             Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadByte(); });
         }
@@ -247,60 +247,60 @@ namespace IOLibTest {
                 r.ReadByte();
             Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadSByte(); }, "ReadSByte failed");
 
-            // ReadShortLE
+            // ReadShort
             r = new UnityBinaryReader(TestData);
             for (int i = 0; i < 7; i++)
                 r.ReadByte();
-            Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadShortLE(); }, "ReadShortLE failed");
+            Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadShort(); }, "ReadShort failed");
             // ReadShortBE
             r = new UnityBinaryReader(TestData);
             for (int i = 0; i < 7; i++)
                 r.ReadByte();
             Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadShortBE(); }, "ReadShortBE failed");
-            // ReadUShortLE
+            // ReadUShort
             r = new UnityBinaryReader(TestData);
             for (int i = 0; i < 7; i++)
                 r.ReadByte();
-            Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadUShortLE(); }, "ReadUShortLE failed");
+            Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadUShort(); }, "ReadUShort failed");
             // ReadUShortBE
             r = new UnityBinaryReader(TestData);
             for (int i = 0; i < 7; i++)
                 r.ReadByte();
             Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadUShortBE(); }, "ReadUShortBE failed");
 
-            // ReadIntLE
+            // ReadInt
             r = new UnityBinaryReader(TestData);
             for (int i = 0; i < 5; i++)
                 r.ReadByte();
-            Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadIntLE(); }, "ReadIntLE failed");
+            Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadInt(); }, "ReadInt failed");
             // ReadIntBE
             r = new UnityBinaryReader(TestData);
             for (int i = 0; i < 5; i++)
                 r.ReadByte();
             Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadIntBE(); }, "ReadIntBE failed");
-            // ReadUIntLE
+            // ReadUInt
             r = new UnityBinaryReader(TestData);
             for (int i = 0; i < 5; i++)
                 r.ReadByte();
-            Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadUIntLE(); }, "ReadUIntLE failed");
+            Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadUInt(); }, "ReadUInt failed");
             // ReadUIntBE
             r = new UnityBinaryReader(TestData);
             for (int i = 0; i < 5; i++)
                 r.ReadByte();
             Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadUIntBE(); }, "ReadUIntBE failed");
 
-            // ReadLongLE
+            // ReadLong
             r = new UnityBinaryReader(TestData);
             r.ReadByte();
-            Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadLongLE(); }, "ReadLongLE failed");
+            Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadLong(); }, "ReadLong failed");
             // ReadLongBE
             r = new UnityBinaryReader(TestData);
             r.ReadByte();
             Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadLongBE(); }, "ReadLongBE failed");
-            // ReadULongLE
+            // ReadULong
             r = new UnityBinaryReader(TestData);
             r.ReadByte();
-            Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadULongLE(); }, "ReadULongLE failed");
+            Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadULong(); }, "ReadULong failed");
             // ReadULongBE
             r = new UnityBinaryReader(TestData);
             r.ReadByte();

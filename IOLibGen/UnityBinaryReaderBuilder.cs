@@ -28,14 +28,14 @@ namespace IOLibGen {
 
             helper.CreateMethod("ReadByte", typeof(byte), ReadByteEmitter);
             helper.CreateMethod("ReadSByte", typeof(sbyte), ReadSByteEmitter);
-            helper.CreateMethod("ReadShortLE", typeof(short), ReadShortLEEmitter);
-            ReadIntLE = helper.CreateMethod("ReadIntLE", typeof(int), ReadIntLEEmitter);
-            helper.CreateMethod("ReadLongLE", typeof(long), ReadLongLEEmitter);
-            helper.CreateMethod("ReadFloatLE", typeof(float), ReadFloatLEEmitter);
-            helper.CreateMethod("ReadDoubleLE", typeof(double), ReadDoubleLEEmitter);
-            helper.CreateMethod("ReadUShortLE", typeof(ushort), ReadUShortLEEmitter);
-            helper.CreateMethod("ReadUIntLE", typeof(uint), ReadUIntLEEmitter);
-            helper.CreateMethod("ReadULongLE", typeof(ulong), ReadULongLEEmitter);
+            helper.CreateMethod("ReadShort", typeof(short), ReadShortEmitter);
+            ReadInt = helper.CreateMethod("ReadInt", typeof(int), ReadIntEmitter);
+            helper.CreateMethod("ReadLong", typeof(long), ReadLongEmitter);
+            helper.CreateMethod("ReadFloat", typeof(float), ReadFloatEmitter);
+            helper.CreateMethod("ReadDouble", typeof(double), ReadDoubleEmitter);
+            helper.CreateMethod("ReadUShort", typeof(ushort), ReadUShortEmitter);
+            helper.CreateMethod("ReadUInt", typeof(uint), ReadUIntEmitter);
+            helper.CreateMethod("ReadULong", typeof(ulong), ReadULongEmitter);
 
             helper.CreateMethod("ReadShortBE", typeof(short), ReadShortBEEmitter);
             helper.CreateMethod("ReadIntBE", typeof(int), ReadIntBEEmitter);
@@ -56,7 +56,7 @@ namespace IOLibGen {
         private static FieldInfo bound = default(FieldInfo);
         private static PropertyInfo Position = default(PropertyInfo);
         private static ConstructorInfo defctor = default(ConstructorInfo);
-        private static MethodInfo ReadIntLE = default(MethodInfo);
+        private static MethodInfo ReadInt = default(MethodInfo);
         private static Type type = default(Type);
 
         #region Property
@@ -254,7 +254,7 @@ namespace IOLibGen {
         #endregion
 
         #region Little Endians
-        private static void ReadShortLEEmitter(ILGenerator il) {
+        private static void ReadShortEmitter(ILGenerator il) {
             BoundaryCheckEmitter(il, OpCodes.Ldc_I4_2);
 #if SAFETY
             il.DeclareLocal(typeof(byte[]), true);
@@ -269,7 +269,7 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ret);
         }
 
-        private static void ReadIntLEEmitter(ILGenerator il) {
+        private static void ReadIntEmitter(ILGenerator il) {
             BoundaryCheckEmitter(il, OpCodes.Ldc_I4_4);
 #if SAFETY
             il.DeclareLocal(typeof(byte[]), true);
@@ -284,7 +284,7 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ret);
         }
 
-        private static void ReadLongLEEmitter(ILGenerator il) {
+        private static void ReadLongEmitter(ILGenerator il) {
             BoundaryCheckEmitter(il, OpCodes.Ldc_I4_8);
 #if SAFETY
             il.DeclareLocal(typeof(byte[]), true);
@@ -299,7 +299,7 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ret);
         }
 
-        private static void ReadFloatLEEmitter(ILGenerator il) {
+        private static void ReadFloatEmitter(ILGenerator il) {
             BoundaryCheckEmitter(il, OpCodes.Ldc_I4_4);
 #if SAFETY
             il.DeclareLocal(typeof(byte[]), true);
@@ -314,7 +314,7 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ret);
         }
 
-        private static void ReadDoubleLEEmitter(ILGenerator il) {
+        private static void ReadDoubleEmitter(ILGenerator il) {
             BoundaryCheckEmitter(il, OpCodes.Ldc_I4_8);
 #if SAFETY
             il.DeclareLocal(typeof(byte[]), true);
@@ -329,7 +329,7 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ret);
         }
 
-        private static void ReadUShortLEEmitter(ILGenerator il) {
+        private static void ReadUShortEmitter(ILGenerator il) {
             BoundaryCheckEmitter(il, OpCodes.Ldc_I4_2);
 #if SAFETY
             il.DeclareLocal(typeof(byte[]), true);
@@ -344,7 +344,7 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ret);
         }
 
-        private static void ReadUIntLEEmitter(ILGenerator il) {
+        private static void ReadUIntEmitter(ILGenerator il) {
             BoundaryCheckEmitter(il, OpCodes.Ldc_I4_4);
 #if SAFETY
             il.DeclareLocal(typeof(byte[]), true);
@@ -359,7 +359,7 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ret);
         }
 
-        private static void ReadULongLEEmitter(ILGenerator il) {
+        private static void ReadULongEmitter(ILGenerator il) {
             BoundaryCheckEmitter(il, OpCodes.Ldc_I4_8);
 #if SAFETY
             il.DeclareLocal(typeof(byte[]), true);
@@ -693,9 +693,9 @@ namespace IOLibGen {
             il.DeclareLocal(typeof(byte[]), true);
 
             // Read index
-            // cnt = ReadIntLE();
+            // cnt = ReadInt();
             il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Call, ReadIntLE);
+            il.Emit(OpCodes.Call, ReadInt);
 
             // PrepareBuffer
             // buf = new T[cnt];(fixed)

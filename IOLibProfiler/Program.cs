@@ -24,7 +24,7 @@ namespace IOLibProfiler {
             sw.Restart();
 
             for(int i = 0; i < 2500000; i++) {
-                r.ReadIntLE();
+                r.ReadInt();
             }
 
             sw.Stop();

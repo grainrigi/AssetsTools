@@ -24,17 +24,17 @@ namespace AssetsTools {
                 signature = reader.ReadStringToNull();
                 if (signature != "UnityFS")
                     throw new UnknownFormatException("Signature " + signature + " is not supported");
-                var readformat = reader.ReadIntLE();
+                var readformat = reader.ReadInt();
                 if (readformat != 6)
                     throw new UnknownFormatException("Format " + readformat.ToString() + " is not supported");
                 versionPlayer = reader.ReadStringToNull();
                 versionEngine = reader.ReadStringToNull();
 
                 // Read Header6
-                bundleSize = reader.ReadLongLE();
-                compressedSize = reader.ReadIntLE();
-                uncompressedSize = reader.ReadIntLE();
-                flag = reader.ReadIntLE();
+                bundleSize = reader.ReadLong();
+                compressedSize = reader.ReadInt();
+                uncompressedSize = reader.ReadInt();
+                flag = reader.ReadInt();
             }
 
             public void Write(BinaryWriter writer) {
