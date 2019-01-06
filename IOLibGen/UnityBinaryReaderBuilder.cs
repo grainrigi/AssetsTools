@@ -49,6 +49,14 @@ namespace IOLibGen {
 
             helper.CreateMethod("ReadStringToNull", typeof(string), ReadStringToNullEmitter);
             helper.CreateGenericMethodWithArrayReturn("ReadValueArray", ReadArrayEmitter);
+            helper.CreateMethod("ReadLZ4Data", typeof(int),
+                new[] {
+                    (typeof(int), "compressed_size"),
+                    (typeof(int), "uncompressed_size"),
+                    (typeof(byte[]), "dest"),
+                    (typeof(int), "dest_offset")
+                },
+                ReadLZ4DataEmitter);
         }
 
         private static FieldInfo file = default(FieldInfo);
@@ -781,6 +789,37 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ldfld, offset);
             il.Emit(OpCodes.Ldloc_1);
             il.Emit(OpCodes.Conv_I4);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Stfld, offset);
+
+            il.Emit(OpCodes.Ret);
+        }
+
+        private static void ReadLZ4DataEmitter(ILGenerator il) {
+            il.DeclareLocal(typeof(int)).SetLocalSymInfo("read");
+
+            // read = MessagePack.LZ4.LZ4Codec.Decode64Unsafe(
+            //  file, offset, compressed_size, dest, dest_offset, uncompressed_size
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, file);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, offset);
+
+            il.Emit(OpCodes.Ldarg_1);
+
+            il.Emit(OpCodes.Ldarg_3);
+            il.Emit(OpCodes.Ldarg_S, (byte)4);
+            il.Emit(OpCodes.Ldarg_2);
+
+            il.Emit(OpCodes.Call,
+                typeof(MessagePack.LZ4.LZ4Codec).GetMethod("Decode64Unsafe"));
+
+            // offset += compressed_size;
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Ldarg_1);
             il.Emit(OpCodes.Add);
             il.Emit(OpCodes.Stfld, offset);
 
