@@ -73,7 +73,7 @@ namespace IOLibGen {
             il.Emit(OpCodes.Dup);
             il.Emit(OpCodes.Ldfld, bound);
             il.Emit(OpCodes.Ldarg_1);
-            il.Emit(OpCodes.Bgt_S, l_Br);
+            il.Emit(OpCodes.Bge_S, l_Br);
 
             il.Emit(OpCodes.Newobj, typeof(IndexOutOfRangeException).GetConstructor(Type.EmptyTypes));
             il.Emit(OpCodes.Throw);
@@ -385,7 +385,7 @@ namespace IOLibGen {
             il.DeclareLocal(typeof(byte[]), true);
             FixFileEmitter(il, OpCodes.Stloc_3);
 #endif
-            il.Emit(OpCodes.Ldloca_S, 1);
+            il.Emit(OpCodes.Ldloca_S, (byte)1);
             il.Emit(OpCodes.Conv_U);
 
             LoadCurrentAddrEmitter(il);
@@ -412,7 +412,7 @@ namespace IOLibGen {
             il.DeclareLocal(typeof(byte[]), true);
             FixFileEmitter(il, OpCodes.Stloc_3);
 #endif
-            il.Emit(OpCodes.Ldloca_S, 1);
+            il.Emit(OpCodes.Ldloca_S, (byte)1);
             il.Emit(OpCodes.Conv_U);
 
             LoadCurrentAddrEmitter(il);
@@ -438,7 +438,7 @@ namespace IOLibGen {
             il.DeclareLocal(typeof(byte[]), true);
             FixFileEmitter(il, OpCodes.Stloc_3);
 #endif
-            il.Emit(OpCodes.Ldloca_S, 1);
+            il.Emit(OpCodes.Ldloca_S, (byte)1);
             il.Emit(OpCodes.Conv_U);
 
             LoadCurrentAddrEmitter(il);
@@ -464,7 +464,7 @@ namespace IOLibGen {
             il.DeclareLocal(typeof(byte[]), true);
             FixFileEmitter(il, OpCodes.Stloc_3);
 #endif
-            il.Emit(OpCodes.Ldloca_S, 1);
+            il.Emit(OpCodes.Ldloca_S, (byte)1);
             il.Emit(OpCodes.Conv_U);
 
             LoadCurrentAddrEmitter(il);
@@ -490,7 +490,7 @@ namespace IOLibGen {
             il.DeclareLocal(typeof(byte[]), true);
             FixFileEmitter(il, OpCodes.Stloc_3);
 #endif
-            il.Emit(OpCodes.Ldloca_S, 1);
+            il.Emit(OpCodes.Ldloca_S, (byte)1);
             il.Emit(OpCodes.Conv_U);
 
             LoadCurrentAddrEmitter(il);
@@ -516,7 +516,7 @@ namespace IOLibGen {
             il.DeclareLocal(typeof(byte[]), true);
             FixFileEmitter(il, OpCodes.Stloc_3);
 #endif
-            il.Emit(OpCodes.Ldloca_S, 1);
+            il.Emit(OpCodes.Ldloca_S, (byte)1);
             il.Emit(OpCodes.Conv_U);
 
             LoadCurrentAddrEmitter(il);
@@ -543,7 +543,7 @@ namespace IOLibGen {
             il.DeclareLocal(typeof(byte[]), true);
             FixFileEmitter(il, OpCodes.Stloc_3);
 #endif
-            il.Emit(OpCodes.Ldloca_S, 1);
+            il.Emit(OpCodes.Ldloca_S, (byte)1);
             il.Emit(OpCodes.Conv_U);
 
             LoadCurrentAddrEmitter(il);
@@ -569,7 +569,7 @@ namespace IOLibGen {
             il.DeclareLocal(typeof(byte[]), true);
             FixFileEmitter(il, OpCodes.Stloc_3);
 #endif
-            il.Emit(OpCodes.Ldloca_S, 1);
+            il.Emit(OpCodes.Ldloca_S, (byte)1);
             il.Emit(OpCodes.Conv_U);
 
             LoadCurrentAddrEmitter(il);
@@ -690,33 +690,19 @@ namespace IOLibGen {
         private static void ReadArrayEmitter(ILGenerator il, TypeInfo T) {
             il.DeclareLocal(T.MakeArrayType(), true);
             il.DeclareLocal(typeof(long)).SetLocalSymInfo("copysize");
+            il.DeclareLocal(typeof(byte[]), true);
 
             // Read index
             // cnt = ReadIntLE();
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Call, ReadIntLE);
 
-            // Boundary Check
-            // Check(cnt + offset <= bound);
-            var l_cont = il.DefineLabel();
-
-            il.Emit(OpCodes.Dup);
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Ldfld, offset);
-            il.Emit(OpCodes.Add);
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Ldfld, bound);
-            il.Emit(OpCodes.Ble_S, l_cont);
-
-            il.Emit(OpCodes.Newobj, typeof(IndexOutOfRangeException).GetConstructor(Type.EmptyTypes));
-            il.Emit(OpCodes.Throw);
-
-            il.MarkLabel(l_cont);
-
             // PrepareBuffer
             // buf = new T[cnt];(fixed)
+            // fixed(file)
             il.Emit(OpCodes.Newarr, T);
             il.Emit(OpCodes.Stloc_0);
+            FixFileEmitter(il, OpCodes.Stloc_2);
 
             // Calc copy size
             // copysize = (&buf[1] - &buf[0]) * buf.Length;
@@ -740,6 +726,27 @@ namespace IOLibGen {
 
             il.Emit(OpCodes.Stloc_1);
 
+            // Boundary Check
+            // Check(copysize + offset <= bound);
+            var l_cont = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldloc_1);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Conv_I8);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, bound);
+            il.Emit(OpCodes.Conv_I8);
+            il.Emit(OpCodes.Ble_S, l_cont);
+
+            DebugLogEmitter(il, "copysize is too long");
+
+            il.Emit(OpCodes.Newobj, typeof(IndexOutOfRangeException).GetConstructor(Type.EmptyTypes));
+            il.Emit(OpCodes.Throw);
+
+            il.MarkLabel(l_cont);
+
             // Copy
             // Buffer.MemoryCopy(&file[offset], &buf[0], copysize, copysize);
             il.Emit(OpCodes.Ldarg_0);
@@ -762,6 +769,7 @@ namespace IOLibGen {
                     new Type[] { typeof(void*), typeof(void*), typeof(long), typeof(long) }));
 
             // Unfix
+            UnfixFileEmitter(il, OpCodes.Stloc_2);
             il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Ldnull);
             il.Emit(OpCodes.Stloc_0);
