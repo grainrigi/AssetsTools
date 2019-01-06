@@ -36,6 +36,17 @@ namespace IOLibGen {
             return method;
         }
 
+        public MethodInfo CreateStaticMethod(string name, Type ret, (Type, string)[] args, Action<ILGenerator> emitter) {
+            MethodBuilder method = _type.DefineMethod(
+                name,
+                MethodAttributes.Public | MethodAttributes.Static,
+                ret, args.Select(tup => tup.Item1).ToArray());
+            for (int i = 0; i < args.Length; i++)
+                method.DefineParameter(i + 1, ParameterAttributes.None, args[i].Item2);
+            emitter(method.GetILGenerator());
+            return method;
+        }
+
         public MethodInfo CreateGenericMethodWithArrayReturn(string name, Action<ILGenerator, TypeInfo> emitter) {
             MethodBuilder method = _type.DefineMethod(
                 name,
@@ -74,6 +85,15 @@ namespace IOLibGen {
             return ctor;
         }
 
+        public ConstructorInfo CreateCCtor(Action<ILGenerator> emitter) {
+            ConstructorBuilder cctor = _type.DefineConstructor(
+                MethodAttributes.Public | MethodAttributes.Static,
+                CallingConventions.Standard,
+                Type.EmptyTypes);
+            emitter(cctor.GetILGenerator());
+            return cctor;
+        }
+
         public ConstructorInfo CreatePrivateCtor((Type, string)[] args, Action<ILGenerator> emitter) {
             ConstructorBuilder ctor = _type.DefineConstructor(
                 MethodAttributes.Private,
@@ -89,6 +109,11 @@ namespace IOLibGen {
 
         public FieldInfo CreateField(string name, Type type) {
             FieldBuilder field = _type.DefineField(name, type, FieldAttributes.Private);
+            return field;
+        }
+
+        public FieldInfo CreateStaticField(string name, Type type) {
+            FieldBuilder field = _type.DefineField(name, type, FieldAttributes.Private | FieldAttributes.Static);
             return field;
         }
 
