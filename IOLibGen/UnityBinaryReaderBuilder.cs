@@ -19,12 +19,18 @@ namespace IOLibGen {
             file = helper.CreateField("file", typeof(byte[]));
             offset = helper.CreateField("offset", typeof(int));
             bound = helper.CreateField("bound", typeof(int));
+            start = helper.CreateField("start", typeof(int));
 
             Position = helper.CreateProperty("Position", typeof(int), get_PositionEmitter, set_PositionEmitter);
 
             defctor = helper.CreatePrivateCtor(null, CtorEmitter);
             helper.CreateCtor(new[] { (typeof(string), "filename") }, CtorFromFileEmitter);
             helper.CreateCtor(new[] { (typeof(byte[]), "bin") }, CtorFromBinaryEmitter);
+            helper.CreateCtor(new[] {
+                (typeof(byte[]), "bin"),
+                (typeof(int), "offset"),
+                (typeof(int), "length")
+            },CtorFromBinaryRangeEmitter);
 
             helper.CreateMethod("ReadByte", typeof(byte), ReadByteEmitter);
             helper.CreateMethod("ReadSByte", typeof(sbyte), ReadSByteEmitter);
@@ -62,6 +68,7 @@ namespace IOLibGen {
         private static FieldInfo file = default(FieldInfo);
         private static FieldInfo offset = default(FieldInfo);
         private static FieldInfo bound = default(FieldInfo);
+        private static FieldInfo start = default(FieldInfo);
         private static PropertyInfo Position = default(PropertyInfo);
         private static ConstructorInfo defctor = default(ConstructorInfo);
         private static MethodInfo ReadInt = default(MethodInfo);
@@ -71,23 +78,34 @@ namespace IOLibGen {
         private static void get_PositionEmitter(ILGenerator il) {
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, start);
+            il.Emit(OpCodes.Sub);
             il.Emit(OpCodes.Ret);
         }
 
         private static void set_PositionEmitter(ILGenerator il) {
+            il.DeclareLocal(typeof(int)).SetLocalSymInfo("realPosition");
+
             var l_Br = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, start);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Stloc_0);
 
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Dup);
             il.Emit(OpCodes.Ldfld, bound);
-            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Bge_S, l_Br);
 
             il.Emit(OpCodes.Newobj, typeof(IndexOutOfRangeException).GetConstructor(Type.EmptyTypes));
             il.Emit(OpCodes.Throw);
 
             il.MarkLabel(l_Br);
-            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Stfld, offset);
             il.Emit(OpCodes.Ret);
         }
@@ -105,8 +123,12 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Stfld, offset);
 
+            il.Emit(OpCodes.Dup);
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Stfld, bound);
+
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Stfld, start);
 
             il.Emit(OpCodes.Ret);
         }
@@ -149,9 +171,108 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Stfld, offset);
 
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Stfld, start);
+
             il.Emit(OpCodes.Ldarg_1);
             il.Emit(OpCodes.Ldlen);
             il.Emit(OpCodes.Conv_I4);
+            il.Emit(OpCodes.Stfld, bound);
+
+            il.Emit(OpCodes.Ret);
+        }
+
+        private static void CtorFromBinaryRangeEmitter(ILGenerator il) {
+            // Check for endianness
+
+            var l_main = il.DefineLabel();
+            il.Emit(OpCodes.Ldsfld,
+                typeof(BitConverter).GetField("IsLittleEndian"));
+            il.Emit(OpCodes.Brtrue_S, l_main);
+            il.Emit(OpCodes.Ldstr, "BigEndian platform is not supported");
+            il.Emit(OpCodes.Newobj,
+                typeof(NotSupportedException).GetConstructor(new Type[] { typeof(string) }));
+            il.Emit(OpCodes.Throw);
+
+            il.MarkLabel(l_main);
+
+            var l_cont = il.DefineLabel();
+            var l_except = il.DefineLabel();
+
+            // Argument Check
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Brtrue_S, l_cont);
+
+            il.Emit(OpCodes.Ldstr, "bin");
+            il.Emit(OpCodes.Newobj,
+                typeof(NullReferenceException).GetConstructor(new Type[] { typeof(string) }));
+            il.Emit(OpCodes.Throw);
+
+            il.MarkLabel(l_cont);
+            l_cont = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldlen);
+            il.Emit(OpCodes.Conv_I4);
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Ble_S, l_except);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Blt_S, l_except);
+            il.Emit(OpCodes.Br_S, l_cont);
+
+            il.MarkLabel(l_except);
+            il.Emit(OpCodes.Ldstr, "offset");
+            l_except = il.DefineLabel();
+            il.Emit(OpCodes.Newobj,
+                typeof(ArgumentOutOfRangeException).GetConstructor(new Type[] { typeof(string) }));
+            il.Emit(OpCodes.Throw);
+
+            il.MarkLabel(l_cont);
+            l_cont = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldarg_3);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Blt_S, l_except);
+            il.Emit(OpCodes.Ldarg_3);
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Blt_S, l_except);
+            il.Emit(OpCodes.Ldarg_3);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Blt_S, l_except);
+            il.Emit(OpCodes.Br_S, l_cont);
+
+            il.MarkLabel(l_except);
+            l_except = il.DefineLabel();
+            il.Emit(OpCodes.Ldstr, "length");
+            il.Emit(OpCodes.Newobj,
+                typeof(ArgumentOutOfRangeException).GetConstructor(new Type[] { typeof(string) }));
+            il.Emit(OpCodes.Throw);
+
+            
+
+            il.MarkLabel(l_cont);
+
+            il.Emit(OpCodes.Ldarg_0);
+
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Stfld, file);
+
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Stfld, offset);
+
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Stfld, start);
+
+            il.Emit(OpCodes.Ldarg_3);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Add);
             il.Emit(OpCodes.Stfld, bound);
 
             il.Emit(OpCodes.Ret);
@@ -170,6 +291,11 @@ namespace IOLibGen {
             il.Emit(OpCodes.Throw);
 
             il.MarkLabel(l_main);
+
+            // base = 0;
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Stfld, start);
 
             // using(FileStream fs = new FileStream(name, FileMode.Open)) {
             il.DeclareLocal(typeof(FileStream)).SetLocalSymInfo("fs");

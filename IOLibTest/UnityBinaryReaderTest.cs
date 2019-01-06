@@ -70,6 +70,23 @@ namespace IOLibTest {
         }
 
         [TestMethod]
+        public void ConstructTest_BinaryRange() {
+            UnityBinaryReader reader = new UnityBinaryReader(TestData, 0, 8);
+            Assert.ThrowsException<NullReferenceException>(delegate () { new UnityBinaryReader((byte[])null, 0, 8); });
+            Assert.ThrowsException<ArgumentOutOfRangeException>(delegate () { new UnityBinaryReader(TestData, 0, 9); });
+            Assert.ThrowsException<ArgumentOutOfRangeException>(delegate () { new UnityBinaryReader(TestData, 1, 8); });
+        }
+
+        [TestMethod]
+
+        public void Test_BinaryRange() {
+            UnityBinaryReader r = new UnityBinaryReader(TestData, 4, 4);
+            for (int i = 4; i < 8; i++)
+                Assert.AreEqual<byte>(TestData[i], r.ReadByte());
+            Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadByte(); });
+        }
+
+        [TestMethod]
         public void ConstructTest_File() {
             UnityBinaryReader reader = new UnityBinaryReader(filename);
         }
