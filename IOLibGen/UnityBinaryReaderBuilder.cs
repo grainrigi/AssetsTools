@@ -132,8 +132,9 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ldarg_1);
             il.Emit(OpCodes.Brtrue_S, l_cont);
 
+            il.Emit(OpCodes.Ldstr, "bin");
             il.Emit(OpCodes.Newobj,
-                typeof(NullReferenceException).GetConstructor(Type.EmptyTypes));
+                typeof(NullReferenceException).GetConstructor(new Type[] { typeof(string) }));
             il.Emit(OpCodes.Throw);
 
             il.MarkLabel(l_cont);
