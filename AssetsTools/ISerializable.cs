@@ -8,7 +8,7 @@ using System.IO;
 namespace AssetsTools {
     public interface ISerializable {
         void Read(UnityBinaryReader reader);
-        void Write(BinaryWriter writer);
+        void Write(UnityBinaryWriter writer);
     }
 
     public class UnknownFormatException : Exception {
