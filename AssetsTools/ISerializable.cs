@@ -7,7 +7,7 @@ using System.IO;
 
 namespace AssetsTools {
     public interface ISerializable {
-        void Read(EndianBinaryReader reader);
+        void Read(UnityBinaryReader reader);
         void Write(BinaryWriter writer);
     }
 

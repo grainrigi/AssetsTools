@@ -67,8 +67,6 @@
     <Compile Include="AssetBundleFile.cs" />
     <Compile Include="Class1.cs" />
     <Compile Include="Color4.cs" />
-    <Compile Include="EndianBinaryReader.cs" />
-    <Compile Include="EndianBinaryWriter.cs" />
     <Compile Include="Extensions\BinaryReaderExtensions.cs" />
     <Compile Include="Extensions\BinaryWriterExtentions.cs" />
     <Compile Include="Extensions\StreamExtensions.cs" />

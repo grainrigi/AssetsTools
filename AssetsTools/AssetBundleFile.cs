@@ -20,21 +20,21 @@ namespace AssetsTools {
             int flag;
 
 
-            public void Read(EndianBinaryReader reader) {
+            public void Read(UnityBinaryReader reader) {
                 signature = reader.ReadStringToNull();
                 if (signature != "UnityFS")
                     throw new UnknownFormatException("Signature " + signature + " is not supported");
-                var readformat = reader.ReadInt32();
+                var readformat = reader.ReadIntLE();
                 if (readformat != 6)
                     throw new UnknownFormatException("Format " + readformat.ToString() + " is not supported");
                 versionPlayer = reader.ReadStringToNull();
                 versionEngine = reader.ReadStringToNull();
 
                 // Read Header6
-                bundleSize = reader.ReadInt64();
-                compressedSize = reader.ReadInt32();
-                uncompressedSize = reader.ReadInt32();
-                flag = reader.ReadInt32();
+                bundleSize = reader.ReadLongLE();
+                compressedSize = reader.ReadIntLE();
+                uncompressedSize = reader.ReadIntLE();
+                flag = reader.ReadIntLE();
             }
 
             public void Write(BinaryWriter writer) {
