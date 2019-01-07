@@ -53,6 +53,13 @@ namespace IOLibGen {
             helper.CreateMethod("ReadULongBE", typeof(ulong), ReadULongBEEmitter);
 
 
+            ReadBytes = helper.CreateMethod("ReadBytes", typeof(void),
+                new[] {
+                    (typeof(byte[]), "dest"),
+                    (typeof(int), "offset"),
+                    (typeof(int), "length")
+                }, ReadBytesEmitter);
+            helper.CreateMethod("ReadBytes", typeof(byte[]), new[] { (typeof(int), "length") }, ReadBytes_1ArgEmitter);
             helper.CreateMethod("ReadStringToNull", typeof(string), ReadStringToNullEmitter);
             helper.CreateGenericMethodWithArrayReturn("ReadValueArray", ReadArrayEmitter);
             helper.CreateMethod("ReadLZ4Data", typeof(int),
@@ -72,6 +79,7 @@ namespace IOLibGen {
         private static PropertyInfo Position = default(PropertyInfo);
         private static ConstructorInfo defctor = default(ConstructorInfo);
         private static MethodInfo ReadInt = default(MethodInfo);
+        private static MethodInfo ReadBytes = default(MethodInfo);
         private static Type type = default(Type);
 
         #region Property
@@ -723,6 +731,157 @@ namespace IOLibGen {
         #endregion Big Endians
 
         #region VarLength Data
+        private static void ReadBytesEmitter(ILGenerator il) {
+            il.DeclareLocal(typeof(byte[]), true).SetLocalSymInfo("src");
+            il.DeclareLocal(typeof(byte[]), true).SetLocalSymInfo("dest");
+            il.DeclareLocal(typeof(int)).SetLocalSymInfo("offset");
+
+            // offset = this.offset;
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Stloc_2);
+
+            // Argument Check
+            // bin != null
+            // 0 <= offset < bin.Length
+            // 0 <= length <= bin.Length - offset
+            // offset_l + length <= bound
+            var l_cont = il.DefineLabel();
+            var l_except = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Brtrue_S, l_cont);
+
+            il.Emit(OpCodes.Ldstr, "dest");
+            il.Emit(OpCodes.Newobj,
+                typeof(NullReferenceException).GetConstructor(new Type[] { typeof(string) }));
+            il.Emit(OpCodes.Throw);
+
+            il.MarkLabel(l_cont);
+            l_cont = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Blt_S, l_except);
+
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldlen);
+            il.Emit(OpCodes.Conv_I4);
+            il.Emit(OpCodes.Blt_S, l_cont);
+
+            il.MarkLabel(l_except);
+            l_except = il.DefineLabel();
+            il.Emit(OpCodes.Ldstr, "offset");
+            il.Emit(OpCodes.Newobj,
+                typeof(ArgumentOutOfRangeException).GetConstructor(new Type[] { typeof(string) }));
+            il.Emit(OpCodes.Throw);
+
+            il.MarkLabel(l_cont);
+            l_cont = il.DefineLabel();
+            il.Emit(OpCodes.Ldarg_3);
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Blt_S, l_except);
+
+            il.Emit(OpCodes.Ldarg_3);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldlen);
+            il.Emit(OpCodes.Conv_I4);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Sub);
+            il.Emit(OpCodes.Ble_S, l_cont);
+
+            il.MarkLabel(l_except);
+            il.Emit(OpCodes.Ldstr, "length");
+            il.Emit(OpCodes.Newobj,
+                typeof(ArgumentOutOfRangeException).GetConstructor(new Type[] { typeof(string) }));
+            il.Emit(OpCodes.Throw);
+
+            il.MarkLabel(l_cont);
+            l_cont = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldarg_3);
+            il.Emit(OpCodes.Ldloc_2);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, bound);
+            il.Emit(OpCodes.Ble_S, l_cont);
+
+            il.Emit(OpCodes.Newobj,
+                typeof(IndexOutOfRangeException).GetConstructor(Type.EmptyTypes));
+            il.Emit(OpCodes.Throw);
+
+
+            il.MarkLabel(l_cont);
+
+            // Fix
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, file);
+            il.Emit(OpCodes.Stloc_0);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Stloc_1);
+
+            // Copy
+            // Buffer.MemoryCopy(&src[offset_l], &dest[offset], length, length);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Ldloc_2);
+            il.Emit(OpCodes.Ldelema, typeof(byte));
+            il.Emit(OpCodes.Conv_U);
+
+            il.Emit(OpCodes.Ldloc_1);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Ldelema, typeof(byte));
+            il.Emit(OpCodes.Conv_U);
+
+            il.Emit(OpCodes.Ldarg_3);
+            il.Emit(OpCodes.Conv_I8);
+            il.Emit(OpCodes.Ldarg_3);
+            il.Emit(OpCodes.Conv_I8);
+
+            il.Emit(OpCodes.Call,
+                typeof(Buffer).GetMethod("MemoryCopy",
+                    new Type[] { typeof(void*), typeof(void*), typeof(long), typeof(long) }));
+
+            // Unfix
+            il.Emit(OpCodes.Ldnull);
+            il.Emit(OpCodes.Stloc_1);
+            il.Emit(OpCodes.Ldnull);
+            il.Emit(OpCodes.Stloc_0);
+
+            // Forward
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldloc_2);
+            il.Emit(OpCodes.Ldarg_3);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Stfld, offset);
+
+            il.Emit(OpCodes.Ret);
+        }
+
+        private static void ReadBytes_1ArgEmitter(ILGenerator il) {
+            il.DeclareLocal(typeof(byte[])).SetLocalSymInfo("dest");
+
+            // byte[] dest = new byte[length];
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Newarr, typeof(byte));
+            il.Emit(OpCodes.Stloc_0);
+
+            // ReadBytes(dest, 0, length);
+            il.Emit(OpCodes.Ldarg_0);
+
+            il.Emit(OpCodes.Ldloc_0);
+
+            il.Emit(OpCodes.Ldc_I4_0);
+
+            il.Emit(OpCodes.Ldarg_1);
+
+            il.Emit(OpCodes.Call, ReadBytes);
+
+            // return dest;
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Ret);
+        }
+
         private static void ReadStringToNullEmitter(ILGenerator il) {
             il.DeclareLocal(typeof(byte*)).SetLocalSymInfo("curptr");
             il.DeclareLocal(typeof(byte*)).SetLocalSymInfo("endptr");

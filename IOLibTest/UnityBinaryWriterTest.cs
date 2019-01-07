@@ -269,6 +269,21 @@ namespace IOLibTest {
         }
 
         [TestMethod]
+        public void WriteBytes() {
+            UnityBinaryWriter w = new UnityBinaryWriter();
+
+            w.WriteBytes(TestData, 2, 6);
+            byte[] dest = w.ToBytes();
+            for (int i = 0; i < 6; i++)
+                Assert.AreEqual<byte>(TestData[i+2], dest[i]);
+            Assert.AreEqual<int>(6, dest.Length);
+
+            Assert.ThrowsException<NullReferenceException>(delegate () { w.WriteBytes(null, 0, 0); });
+            Assert.ThrowsException<ArgumentOutOfRangeException>(delegate () { w.WriteBytes(TestData, 2, 7); });
+            Assert.ThrowsException<ArgumentOutOfRangeException>(delegate () { w.WriteBytes(TestData, 3, 6); });
+        }
+
+        [TestMethod]
         public void WriteStringToNull() {
             UnityBinaryWriter w = new UnityBinaryWriter();
 

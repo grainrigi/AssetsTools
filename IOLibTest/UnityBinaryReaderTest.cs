@@ -260,6 +260,21 @@ namespace IOLibTest {
         }
 
         [TestMethod]
+        public void ReadBytes() {
+            UnityBinaryReader r = new UnityBinaryReader(TestData);
+
+            byte[] dest = new byte[8 + 2];
+            r.ReadBytes(dest, 2, TestData.Length);
+            for (int i = 0; i < 8; i++)
+                Assert.AreEqual<byte>(TestData[i], dest[i + 2]);
+            r.Position = 0;
+
+            Assert.ThrowsException<NullReferenceException>(delegate () { r.ReadBytes(null, 0, 0); });
+            Assert.ThrowsException<ArgumentOutOfRangeException>(delegate () { r.ReadBytes(dest, 2, 9); });
+            Assert.ThrowsException<ArgumentOutOfRangeException>(delegate () { r.ReadBytes(dest, 3, 8); });
+        }
+
+        [TestMethod]
         public void ReadStringToNull() {
             byte[] sz = new byte[TestStringBytes.Length + 1];
             Array.Copy(TestStringBytes, sz, TestStringBytes.Length);
