@@ -26,7 +26,7 @@ namespace IOLibGen {
             defctor = helper.CreatePrivateCtor(null, CtorEmitter);
             helper.CreateCtor(new[] { (typeof(string), "filename") }, CtorFromFileEmitter);
             helper.CreateCtor(new[] { (typeof(byte[]), "bin") }, CtorFromBinaryEmitter);
-            helper.CreateCtor(new[] {
+            rangector = helper.CreateCtor(new[] {
                 (typeof(byte[]), "bin"),
                 (typeof(int), "offset"),
                 (typeof(int), "length")
@@ -70,6 +70,16 @@ namespace IOLibGen {
                     (typeof(int), "dest_offset")
                 },
                 ReadLZ4DataEmitter);
+
+            helper.CreateMethod("Slice", type,
+                new[] {
+                    (typeof(int), "offset"),
+                    (typeof(int), "length")
+                }, SliceEmitter);
+            helper.CreateMethod("Slice", type,
+                new[] {
+                    (typeof(int), "offset"),
+                }, Slice_1ArgEmitter);
         }
 
         private static FieldInfo file = default(FieldInfo);
@@ -78,6 +88,7 @@ namespace IOLibGen {
         private static FieldInfo start = default(FieldInfo);
         private static PropertyInfo Position = default(PropertyInfo);
         private static ConstructorInfo defctor = default(ConstructorInfo);
+        private static ConstructorInfo rangector = default(ConstructorInfo);
         private static MethodInfo ReadInt = default(MethodInfo);
         private static MethodInfo ReadBytes = default(MethodInfo);
         private static Type type = default(Type);
@@ -1112,6 +1123,38 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ret);
         }
         #endregion
+
+        private static void SliceEmitter(ILGenerator il) {
+            // return new UnityBinaryReader(file, offset, length);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, file);
+
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldarg_2);
+
+            il.Emit(OpCodes.Newobj, rangector);
+
+            il.Emit(OpCodes.Ret);
+        }
+
+        private static void Slice_1ArgEmitter(ILGenerator il) {
+            // return new UnityBinaryReader(file, offset, bound - offset);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, file);
+
+            il.Emit(OpCodes.Ldarg_1);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, bound);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Sub);
+
+            il.Emit(OpCodes.Newobj, rangector);
+
+            il.Emit(OpCodes.Ret);
+        }
 
         #region Helpers
         // load current address as native int
