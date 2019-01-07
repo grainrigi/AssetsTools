@@ -45,6 +45,12 @@ namespace IOLibGen {
 
             helper.CreateMethod("WriteStringToNull", typeof(void), new[] { (typeof(string), "value") }, WriteStringToNullEmitter);
             helper.CreateGenericMethodWithArrayParam("WriteValueArray", WriteArrayEmitter);
+            WriteLZ4Data = helper.CreateMethod("WriteLZ4Data", typeof(int),
+                new[] { (typeof(byte[]), "bin"),
+                    (typeof(int), "offset"),
+                    (typeof(int), "length") }, WriteLZ4DataEmitter);
+            helper.CreateMethod("WriteLZ4Data", typeof(int),
+                new[] { (typeof(byte[]), "bin") }, WriteLZ4Data_1ArgEmitter);
         }
 
         private static FieldInfo file = default(FieldInfo);
@@ -53,6 +59,7 @@ namespace IOLibGen {
         private static PropertyInfo Position = default(PropertyInfo);
         private static ConstructorInfo defctor = default(ConstructorInfo);
         private static MethodInfo EnsureCapacity = default(MethodInfo);
+        private static MethodInfo WriteLZ4Data = default(MethodInfo);
         private static Type type = default(Type);
 
         #region Ctor
@@ -529,6 +536,78 @@ namespace IOLibGen {
             il.Emit(OpCodes.Conv_I4);
             il.Emit(OpCodes.Add);
             il.Emit(OpCodes.Stfld, offset);
+
+            il.Emit(OpCodes.Ret);
+        }
+
+        private static void WriteLZ4DataEmitter(ILGenerator il) {
+            il.DeclareLocal(typeof(int)).SetLocalSymInfo("written");
+
+            var l_cont = il.DefineLabel();
+
+            // Boundary Check
+            // offset + length <= capacity
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Ldarg_3);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, capacity);
+            il.Emit(OpCodes.Ble_S, l_cont);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Ldarg_3);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Call, EnsureCapacity);
+
+            il.MarkLabel(l_cont);
+
+            // read = MessagePack.LZ4.LZ4Codec.Encode64Unsafe(
+            //  bin, offset, length, file, offset, capacity
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Ldarg_3);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, file);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, offset);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, capacity);
+
+            il.Emit(OpCodes.Call,
+                typeof(LZ4.LZ4Codec).GetMethod("Encode64Unsafe"));
+
+            il.Emit(OpCodes.Stloc_0);
+
+            // offset += written;
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Stfld, offset);
+
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Ret);
+        }
+
+        private static void WriteLZ4Data_1ArgEmitter(ILGenerator il) {
+            // WriteLZ4Data(bin, 0, bin.Length);
+            il.Emit(OpCodes.Ldarg_0);
+
+            il.Emit(OpCodes.Ldarg_1);
+
+            il.Emit(OpCodes.Ldc_I4_0);
+
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldlen);
+            il.Emit(OpCodes.Conv_I4);
+
+            il.Emit(OpCodes.Call, WriteLZ4Data);
 
             il.Emit(OpCodes.Ret);
         }
