@@ -29,7 +29,7 @@ using System;
 
 // ReSharper disable InconsistentNaming
 
-namespace MessagePack.LZ4
+namespace LZ4
 {
     public static partial class LZ4Codec
     {

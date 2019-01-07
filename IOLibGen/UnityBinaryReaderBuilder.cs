@@ -940,7 +940,7 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ldarg_2);
 
             il.Emit(OpCodes.Call,
-                typeof(MessagePack.LZ4.LZ4Codec).GetMethod("Decode64Unsafe"));
+                typeof(LZ4.LZ4Codec).GetMethod("Decode64Unsafe"));
 
             // offset += compressed_size;
             il.Emit(OpCodes.Ldarg_0);
