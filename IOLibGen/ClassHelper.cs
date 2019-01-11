@@ -121,14 +121,17 @@ namespace IOLibGen {
             PropertyBuilder prop = _type.DefineProperty(name, PropertyAttributes.None, type, null);
 
             MethodAttributes attr = MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig;
-            MethodBuilder getter = _type.DefineMethod("get_" + name, attr, type, Type.EmptyTypes);
-            getemitter(getter.GetILGenerator());
+            if (getemitter != null) {
+                MethodBuilder getter = _type.DefineMethod("get_" + name, attr, type, Type.EmptyTypes);
+                getemitter(getter.GetILGenerator());
+                prop.SetGetMethod(getter);
+            }
 
-            MethodBuilder setter = _type.DefineMethod("set_" + name, attr, null, new Type[] { type });
-            setemitter(setter.GetILGenerator());
-
-            prop.SetGetMethod(getter);
-            prop.SetSetMethod(setter);
+            if (setemitter != null) {
+                MethodBuilder setter = _type.DefineMethod("set_" + name, attr, null, new Type[] { type });
+                setemitter(setter.GetILGenerator());
+                prop.SetSetMethod(setter);
+            }
 
             return prop;
         }
