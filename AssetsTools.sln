@@ -26,6 +26,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IOLibProfiler", "IOLibProfi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lz4Codec", "Lz4Codec\Lz4Codec.csproj", "{EBE17353-6BDB-4998-9101-CD6C6C945505}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssetsToolsRunner", "AssetsToolsRunner\AssetsToolsRunner.csproj", "{2ACC77D7-0EE5-4AA7-8BEA-C680D8807716}"
+	ProjectSection(ProjectDependencies) = postProject
+		{44C5F581-EE28-408B-B5DC-AAC904644436} = {44C5F581-EE28-408B-B5DC-AAC904644436}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,6 +57,10 @@ Global
 		{EBE17353-6BDB-4998-9101-CD6C6C945505}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EBE17353-6BDB-4998-9101-CD6C6C945505}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EBE17353-6BDB-4998-9101-CD6C6C945505}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2ACC77D7-0EE5-4AA7-8BEA-C680D8807716}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2ACC77D7-0EE5-4AA7-8BEA-C680D8807716}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2ACC77D7-0EE5-4AA7-8BEA-C680D8807716}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2ACC77D7-0EE5-4AA7-8BEA-C680D8807716}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
