@@ -8,52 +8,50 @@ namespace AssetsTools
 {
     public partial class AssetBundleFile
     {
+        public const int FORMAT = 6;
+
         public struct HeaderType : ISerializable {
             public string signature;
-            public const int FORMAT = 6;
+            
+            public int format;
             public string versionPlayer;
             public string versionEngine;
 
             public long bundleSize;
-            public int compressedSize;
-            public int uncompressedSize;
-            public int flag;
 
+            public long CalcSize() {
+                return signature.Length + 1
+                    + 4 //format
+                    + versionPlayer.Length + 1
+                    + versionEngine.Length + 1
+                    + 8; // bundleSize
+            }
 
             public void Read(UnityBinaryReader reader) {
-                // Only Supports UnityFS
                 signature = reader.ReadStringToNull();
-                if (signature != "UnityFS")
-                    throw new UnknownFormatException("Signature " + signature + " is not supported");
-
-                // Only Supports format=6
-                var readformat = reader.ReadInt();
-                if (readformat != FORMAT)
-                    throw new UnknownFormatException("Format " + readformat.ToString() + " is not supported");
+                format = reader.ReadIntBE();
 
                 versionPlayer = reader.ReadStringToNull();
                 versionEngine = reader.ReadStringToNull();
-
-                // Read Header6
-                bundleSize = reader.ReadLong();
-                compressedSize = reader.ReadInt();
-                uncompressedSize = reader.ReadInt();
-                flag = reader.ReadInt();
+                bundleSize = reader.ReadLongBE();
             }
 
             public void Write(UnityBinaryWriter writer) {
-                var utf8 = Encoding.UTF8;
-                writer.WriteStringToNull("UnityFS");
-                writer.WriteInt(FORMAT);
+                writer.WriteStringToNull(signature);
+                writer.WriteIntBE(format);
+
                 writer.WriteStringToNull(versionPlayer);
                 writer.WriteStringToNull(versionEngine);
-
-                // Writer Header6
-                writer.WriteLong(bundleSize);
-                writer.WriteInt(compressedSize);
-                writer.WriteInt(uncompressedSize);
-                writer.WriteInt(flag);
+                writer.WriteLongBE(bundleSize);
             }
+        }
+
+        private void initHeader() {
+            Header.signature = "UnityFS";
+            Header.format = FORMAT;
+            Header.versionPlayer = "5.x.x";
+            Header.versionEngine = "2017.3.1f1";
+            Header.bundleSize = 0;
         }
     }
 }

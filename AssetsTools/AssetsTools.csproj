@@ -65,6 +65,7 @@
     <Compile Include="7zip\Compress\RangeCoder\RangeCoderBit.cs" />
     <Compile Include="7zip\Compress\RangeCoder\RangeCoderBitTree.cs" />
     <Compile Include="7zip\ICoder.cs" />
+    <Compile Include="AssetBundleFile.Files.cs" />
     <Compile Include="AssetBundleFile.cs" />
     <Compile Include="Class1.cs" />
     <Compile Include="Color4.cs" />
@@ -78,6 +79,7 @@
     <Compile Include="SevenZipHelper.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssetBundleFile.Header.cs" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
