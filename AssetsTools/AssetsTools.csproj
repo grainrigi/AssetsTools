@@ -83,4 +83,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy $(TargetDir)$(TargetFileName) $(SolutionDir)library\$(TargetFileName)</PostBuildEvent>
+  </PropertyGroup>
 </Project>
