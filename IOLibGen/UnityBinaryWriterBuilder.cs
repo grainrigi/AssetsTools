@@ -15,12 +15,18 @@ namespace IOLibGen {
 
             file = helper.CreateField("file", typeof(byte[]));
             offset = helper.CreateField("offset", typeof(int));
+            bound = helper.CreateField("bound", typeof(int));
             capacity = helper.CreateField("capacity", typeof(int));
 
             defctor = helper.CreateCtor(null, CtorEmitter);
 
+
             EnsureCapacity = helper.CreateMethod("EnsureCapacity", typeof(void), new[] { (typeof(int), "value") }, EnsureCapacityEmitter);
             helper.CreateMethod("ToBytes", typeof(byte[]), ToBytesEmitter);
+
+            Position = helper.CreateProperty("Position", typeof(int), get_PositionEmitter, set_PositionEmitter);
+            Length = helper.CreateProperty("Length", typeof(int), get_LengthEmitter, null);
+
 
             helper.CreateMethod("WriteByte", typeof(void), new[] { (typeof(byte), "value") }, WriteByteEmitter);
             helper.CreateMethod("WriteSByte", typeof(void), new[] { (typeof(sbyte), "value") }, WriteSByteEmitter);
@@ -63,8 +69,10 @@ namespace IOLibGen {
 
         private static FieldInfo file = default(FieldInfo);
         private static FieldInfo offset = default(FieldInfo);
+        private static FieldInfo bound = default(FieldInfo);
         private static FieldInfo capacity = default(FieldInfo);
         private static PropertyInfo Position = default(PropertyInfo);
+        private static PropertyInfo Length = default(PropertyInfo);
         private static ConstructorInfo defctor = default(ConstructorInfo);
         private static MethodInfo EnsureCapacity = default(MethodInfo);
         private static MethodInfo WriteLZ4Data = default(MethodInfo);
@@ -91,6 +99,44 @@ namespace IOLibGen {
         }
         #endregion
 
+        #region Property
+        private static void get_PositionEmitter(ILGenerator il) {
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Ret);
+        }
+
+        private static void set_PositionEmitter(ILGenerator il) {
+            // Boundary check
+            // value <= capacity
+            var l_cont = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, capacity);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Bge_S, l_cont);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Call, EnsureCapacity);
+
+            il.MarkLabel(l_cont);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Stfld, offset);
+
+            UpdateBoundEmitter(il);
+
+            il.Emit(OpCodes.Ret);
+        }
+
+        private static void get_LengthEmitter(ILGenerator il) {
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, bound);
+            il.Emit(OpCodes.Ret);
+        }
+        #endregion
+
         #region Byte
         private static void WriteByteEmitter(ILGenerator il) {
             BoundaryCheckEmitter(il, OpCodes.Ldc_I4_1);
@@ -101,6 +147,7 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ldarg_1);
             il.Emit(OpCodes.Stelem_I1);
             ForwardEmitter(il, OpCodes.Ldc_I4_1);
+            UpdateBoundEmitter(il);
             il.Emit(OpCodes.Ret);
         }
 
@@ -113,6 +160,7 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ldarg_1);
             il.Emit(OpCodes.Stelem_I1);
             ForwardEmitter(il, OpCodes.Ldc_I4_1);
+            UpdateBoundEmitter(il);
             il.Emit(OpCodes.Ret);
         }
         #endregion
@@ -131,6 +179,7 @@ namespace IOLibGen {
 #if SAFETY
             UnfixFileEmitter(il, OpCodes.Stloc_1);
 #endif
+            UpdateBoundEmitter(il);
             il.Emit(OpCodes.Ret);
         }
 
@@ -147,6 +196,7 @@ namespace IOLibGen {
 #if SAFETY
             UnfixFileEmitter(il, OpCodes.Stloc_1);
 #endif
+            UpdateBoundEmitter(il);
             il.Emit(OpCodes.Ret);
         }
 
@@ -163,6 +213,7 @@ namespace IOLibGen {
 #if SAFETY
             UnfixFileEmitter(il, OpCodes.Stloc_1);
 #endif
+            UpdateBoundEmitter(il);
             il.Emit(OpCodes.Ret);
         }
 
@@ -179,6 +230,7 @@ namespace IOLibGen {
 #if SAFETY
             UnfixFileEmitter(il, OpCodes.Stloc_1);
 #endif
+            UpdateBoundEmitter(il);
             il.Emit(OpCodes.Ret);
         }
 
@@ -195,6 +247,7 @@ namespace IOLibGen {
 #if SAFETY
             UnfixFileEmitter(il, OpCodes.Stloc_1);
 #endif
+            UpdateBoundEmitter(il);
             il.Emit(OpCodes.Ret);
         }
         #endregion
@@ -222,7 +275,7 @@ namespace IOLibGen {
 #endif
 
             ForwardEmitter(il, OpCodes.Ldc_I4_2);
-
+            UpdateBoundEmitter(il);
             il.Emit(OpCodes.Ret);
         }
 
@@ -246,7 +299,7 @@ namespace IOLibGen {
             UnfixFileEmitter(il, OpCodes.Stloc_2);
 #endif
             ForwardEmitter(il, OpCodes.Ldc_I4_4);
-
+            UpdateBoundEmitter(il);
             il.Emit(OpCodes.Ret);
         }
 
@@ -270,7 +323,7 @@ namespace IOLibGen {
             UnfixFileEmitter(il, OpCodes.Stloc_2);
 #endif
             ForwardEmitter(il, OpCodes.Ldc_I4_8);
-
+            UpdateBoundEmitter(il);
             il.Emit(OpCodes.Ret);
         }
 
@@ -294,7 +347,7 @@ namespace IOLibGen {
             UnfixFileEmitter(il, OpCodes.Stloc_2);
 #endif
             ForwardEmitter(il, OpCodes.Ldc_I4_4);
-
+            UpdateBoundEmitter(il);
             il.Emit(OpCodes.Ret);
         }
 
@@ -318,7 +371,7 @@ namespace IOLibGen {
             UnfixFileEmitter(il, OpCodes.Stloc_2);
 #endif
             ForwardEmitter(il, OpCodes.Ldc_I4_8);
-
+            UpdateBoundEmitter(il);
             il.Emit(OpCodes.Ret);
         }
         #endregion
@@ -450,6 +503,7 @@ namespace IOLibGen {
             il.Emit(OpCodes.Add);
             il.Emit(OpCodes.Stfld, offset);
 
+            UpdateBoundEmitter(il);
             il.Emit(OpCodes.Ret);
         }
 
@@ -564,6 +618,8 @@ namespace IOLibGen {
             il.Emit(OpCodes.Add);
             il.Emit(OpCodes.Stfld, offset);
 
+
+            UpdateBoundEmitter(il);
             il.Emit(OpCodes.Ret);
         }
 
@@ -692,6 +748,7 @@ namespace IOLibGen {
             il.Emit(OpCodes.Add);
             il.Emit(OpCodes.Stfld, offset);
 
+            UpdateBoundEmitter(il);
             il.Emit(OpCodes.Ret);
         }
 
@@ -719,7 +776,7 @@ namespace IOLibGen {
             il.MarkLabel(l_cont);
 
             // read = MessagePack.LZ4.LZ4Codec.Encode64Unsafe(
-            //  bin, offset, length, file, offset, capacity
+            //  bin, offset, length, file, offset, capacity - offset
             il.Emit(OpCodes.Ldarg_1);
             il.Emit(OpCodes.Ldarg_2);
             il.Emit(OpCodes.Ldarg_3);
@@ -732,6 +789,9 @@ namespace IOLibGen {
 
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldfld, capacity);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Sub);
 
             il.Emit(OpCodes.Call,
                 typeof(LZ4.LZ4Codec).GetMethod("Encode64Unsafe"));
@@ -746,6 +806,7 @@ namespace IOLibGen {
             il.Emit(OpCodes.Add);
             il.Emit(OpCodes.Stfld, offset);
 
+            UpdateBoundEmitter(il);
             il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Ret);
         }
@@ -853,7 +914,7 @@ namespace IOLibGen {
 
             // ret = new byte[offset];
             il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Ldfld, bound);
             il.Emit(OpCodes.Newarr, typeof(byte));
             il.Emit(OpCodes.Stloc_0);
 
@@ -873,7 +934,7 @@ namespace IOLibGen {
             il.Emit(OpCodes.Conv_U);
 
             il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Ldfld, bound);
             il.Emit(OpCodes.Conv_I8);
 
             il.Emit(OpCodes.Dup);
@@ -914,6 +975,23 @@ namespace IOLibGen {
             il.Emit(step);
             il.Emit(OpCodes.Add);
             il.Emit(OpCodes.Stfld, offset);
+        }
+
+        private static void UpdateBoundEmitter(ILGenerator il) {
+            var l_cont = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, bound);
+            il.Emit(OpCodes.Ble_S, l_cont);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Stfld, bound);
+
+            il.MarkLabel(l_cont);
         }
 
         private static void BoundaryCheckEmitter(ILGenerator il, OpCode step) {
