@@ -15,6 +15,12 @@ namespace AssetsTools {
             }
         }
 
+        private struct CompressionInfo {
+            public byte[] data;
+            public int offset;
+            public int length;
+        }
+
         private const int BLOCK_SIZE = 0x20000;
 
         private void readFiles(UnityBinaryReader reader) {
@@ -76,29 +82,24 @@ namespace AssetsTools {
             int totalsize = Files.Sum(f => f.Data.Length);
 
             // teardown into blocks
-            // 1.File start must be on block boundary
+            // 1.File is not aligned to block boundary (Simple concatation)
             // 2.Maximum block size is BLOCK_SIZE
 
             // Calculate block count
-            var blockcount = Files.Sum(f => (f.Data.Length / BLOCK_SIZE) + (f.Data.Length % BLOCK_SIZE != 0 ? 1 : 0));
+            var totalbytes = Files.Sum(f => f.Data.Length);
+            var blockcount = totalbytes / BLOCK_SIZE + (totalbytes % BLOCK_SIZE != 0 ? 1 : 0);
 
             // Build blockinfo
             BlockInfo[] blockinfos = new BlockInfo[blockcount];
             short blockflag = EnableCompression ? (short)2 : (short)0;
-            int curblock = 0;
-            for(int i = 0; i < Files.Length; i++) {
-                int size = Files[i].Data.Length;
-                while(size > BLOCK_SIZE) {
-                    blockinfos[curblock].compressedSize = 0;
-                    blockinfos[curblock].uncompressedSize = BLOCK_SIZE;
-                    blockinfos[curblock].flag = blockflag;
-                    curblock++;
-                    size -= BLOCK_SIZE;
-                }
-                blockinfos[curblock].compressedSize = 0;
-                blockinfos[curblock].uncompressedSize = size;
-                blockinfos[curblock].flag = blockflag;
-                curblock++;
+            for(int i = 0; i < blockcount; i++) {
+                blockinfos[i].uncompressedSize = BLOCK_SIZE;
+                blockinfos[i].compressedSize = BLOCK_SIZE;
+                blockinfos[i].flag = blockflag;
+            }
+            if (totalbytes % BLOCK_SIZE != 0) {
+                blockinfos[blockcount - 1].uncompressedSize = totalbytes % BLOCK_SIZE;
+                blockinfos[blockcount - 1].compressedSize = totalbytes % BLOCK_SIZE;
             }
 
             // Seek Writer (Skip Info)
@@ -106,59 +107,196 @@ namespace AssetsTools {
             int blockinfosize = 0x10 + 4 + (4 + 4 + 2) * blockinfos.Length;
             int fileinfosize = 4 + Files.Sum(f => f.CalcInfoSize());
             int info_offset = writer.Position;
-            writer.Position = info_offset + infoheadersize + blockinfosize + fileinfosize;
 
             // Write Blocks
-            curblock = 0;
-            int[] fileoffsets = new int[Files.Length];
-            for(int i = 0; i < Files.Length; i++) {
-                int offset = 0;
-                while (offset < Files[i].Data.Length) {
-                    switch(blockinfos[curblock].flag & 0x3F) {
-                        default: // None
-                            writer.WriteBytes(Files[i].Data, offset, blockinfos[curblock].uncompressedSize);
-                            offset += blockinfos[curblock].compressedSize = blockinfos[curblock].uncompressedSize;
-                            break;
-                        case 1:
-                            throw new NotSupportedException("LZMA is not supported");
-                        case 2: // LZ4
-                        case 3: // LZ4HC
-                            // Store current position for rollback
-                            int file_offset = writer.Position;
-                            // Try compression
-                            blockinfos[curblock].compressedSize = writer.WriteLZ4Data(Files[i].Data, offset, blockinfos[curblock].uncompressedSize);
-                            if(blockinfos[curblock].compressedSize == 0 || blockinfos[curblock].compressedSize >= blockinfos[curblock].uncompressedSize) {
-                                writer.Position = file_offset;
-                                writer.WriteBytes(Files[i].Data, offset, blockinfos[curblock].uncompressedSize);
-                                blockinfos[curblock].compressedSize = blockinfos[curblock].uncompressedSize;
-                                blockinfos[curblock].flag &= ~0x3f;
-                            }
-                            offset += blockinfos[curblock].uncompressedSize;
-                            break;
-                    }
-                    curblock++;
-                }
-                if (i < Files.Length - 1)
-                    fileoffsets[i + 1] = fileoffsets[i] + offset;
-            }
 
-            // Write Infos
-            writer.Position = info_offset;
-            // Info Header
-            writer.WriteIntBE(blockinfosize + fileinfosize);
-            writer.WriteIntBE(blockinfosize + fileinfosize);
-            writer.WriteIntBE(0x40);
-            writer.Position += 0x10;
-            // BlockInfo
-            writer.WriteIntBE(blockcount);
-            blockinfos.Write(writer);
-            // FileInfo
-            writer.WriteIntBE(Files.Length);
-            for(int i = 0; i < Files.Length; i++) {
-                writer.WriteLongBE(fileoffsets[i]);
-                writer.WriteLongBE(Files[i].Data.LongLength);
-                writer.WriteIntBE(4);
-                writer.WriteStringToNull(Files[i].Name);
+            // If no compression required, just copy all files
+            if(!EnableCompression) {
+                // Write Header
+
+                // Info Header
+                writer.WriteIntBE(blockinfosize + fileinfosize);
+                writer.WriteIntBE(blockinfosize + fileinfosize);
+                writer.WriteIntBE(0x40);
+                writer.Position += 0x10;
+                // BlockInfo
+                writer.WriteIntBE(blockcount);
+                blockinfos.Write(writer);
+                // FileInfo
+                writer.WriteIntBE(Files.Length);
+                int curoffset = 0;
+                for(int i = 0; i < Files.Length; i++) {
+                    writer.WriteLongBE(curoffset);
+                    writer.WriteLongBE(Files[i].Data.LongLength);
+                    writer.WriteIntBE(4);
+                    writer.WriteStringToNull(Files[i].Name);
+                    curoffset += Files[i].Data.Length;
+                }
+
+                // Write Files
+                for (int i = 0; i < Files.Length; i++)
+                    writer.WriteBytes(Files[i].Data);
+            }
+            // In compression mode, try to parallelize the compression
+            else {
+                // First of all, Prepare buffer for compression
+                byte[] compbuf = MemoryPool<AssetBundleFile>.GetBuffer(blockcount * BLOCK_SIZE);
+
+                // don't parallelize when block count is small
+                if (blockcount < 128) {
+                    byte[] boundarybuf = MiniMemoryPool<AssetBundleFile>.GetBuffer(BLOCK_SIZE);
+                    int remainlength = 0;
+                    int curblock = 0;
+                    for(int i = 0; i < Files.Length; i++) {
+                        // If previous file has overflow, concat and compress
+                        if (remainlength > 0) {
+                            Buffer.BlockCopy(Files[i].Data, 0, boundarybuf, remainlength, BLOCK_SIZE - remainlength);
+                            blockinfos[curblock].compressedSize = 
+                                LZ4.LZ4Codec.Encode64Unsafe(boundarybuf, 0, BLOCK_SIZE,
+                                    compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
+                            // If compression is no use, just copy
+                            if(blockinfos[curblock].compressedSize == 0) { 
+                                blockinfos[curblock].compressedSize = BLOCK_SIZE;
+                                blockinfos[curblock].flag &= ~0x3F;
+                                Buffer.BlockCopy(boundarybuf, 0, compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
+                            }
+                            curblock++;
+                        }
+
+                        // update remainlength
+                        int blockstart = 0;
+                        if(remainlength > 0)
+                            blockstart = BLOCK_SIZE - remainlength;
+
+                        // compress fullblocks
+                        int fullblockcount = (Files[i].Data.Length - blockstart) / BLOCK_SIZE;
+                        for(int j = 0; j < fullblockcount; j++, curblock++) {
+                            blockinfos[curblock].compressedSize = 
+                                LZ4.LZ4Codec.Encode64Unsafe(Files[i].Data, blockstart + j * BLOCK_SIZE, BLOCK_SIZE,
+                                    compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
+                            // If compression is no use, just copy
+                            if (blockinfos[curblock].compressedSize == 0) { 
+                                blockinfos[curblock].compressedSize = BLOCK_SIZE;
+                                blockinfos[curblock].flag &= ~0x3F;
+                                Buffer.BlockCopy(Files[i].Data, blockstart + j * BLOCK_SIZE, compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
+                            }
+                        }
+
+                        // If the file has remaindata, buffer them
+                        remainlength = (Files[i].Data.Length - blockstart) % BLOCK_SIZE;
+                        if(remainlength > 0)
+                            Buffer.BlockCopy(Files[i].Data, Files[i].Data.Length - remainlength, boundarybuf, 0, remainlength);
+                    }
+                    if(remainlength > 0) { // Process last block
+                        blockinfos[curblock].compressedSize =
+                                LZ4.LZ4Codec.Encode64Unsafe(boundarybuf, 0, remainlength,
+                                    compbuf, curblock * BLOCK_SIZE, remainlength);
+                        // If compression is no use, just copy
+                        if (blockinfos[curblock].compressedSize == 0) {
+                            blockinfos[curblock].compressedSize = remainlength;
+                            blockinfos[curblock].flag &= ~0x3F;
+                            Buffer.BlockCopy(boundarybuf, 0, compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
+                        }
+                    }
+                }
+                else {
+                    // Create CompressionInfo & Compress file boundary
+                    CompressionInfo[] compinfos = new CompressionInfo[blockcount];
+                    byte[] boundarybuf = MiniMemoryPool<AssetBundleFile>.GetBuffer(BLOCK_SIZE);
+                    int curblock = 0;
+                    int remainlength = 0;
+                    for(int i = 0; i < Files.Length; i++) {
+                        // If previous file has overflow, concat and compress
+                        if (remainlength > 0) {
+                            Buffer.BlockCopy(Files[i].Data, 0, boundarybuf, remainlength, BLOCK_SIZE - remainlength);
+                            blockinfos[curblock].compressedSize =
+                                LZ4.LZ4Codec.Encode64Unsafe(boundarybuf, 0, BLOCK_SIZE,
+                                    compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
+                            // If compression is no use, just copy
+                            if (blockinfos[curblock].compressedSize == 0) {
+                                blockinfos[curblock].compressedSize = BLOCK_SIZE;
+                                blockinfos[curblock].flag &= ~0x3F;
+                                Buffer.BlockCopy(boundarybuf, 0, compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
+                            }
+                            curblock++;
+                        }
+
+                        int blockstart = 0;
+                        if(remainlength > 0)
+                            blockstart = BLOCK_SIZE - remainlength;
+
+                        int fullblockcount = (Files[i].Data.Length - blockstart) / BLOCK_SIZE;
+                        for(int j = 0; j < fullblockcount; j++, curblock++) {
+                            compinfos[curblock].data = Files[i].Data;
+                            compinfos[curblock].length = BLOCK_SIZE;
+                            compinfos[curblock].offset = blockstart + j * BLOCK_SIZE;
+                        }
+
+                        // If the file has remaindata, buffer them
+                        remainlength = (Files[i].Data.Length - blockstart) % BLOCK_SIZE;
+                        if (remainlength > 0)
+                            Buffer.BlockCopy(Files[i].Data, Files[i].Data.Length - remainlength, boundarybuf, 0, remainlength);
+                    }
+                    if (remainlength > 0) { // Process last block
+                        blockinfos[curblock].compressedSize =
+                                LZ4.LZ4Codec.Encode64Unsafe(boundarybuf, 0, remainlength,
+                                    compbuf, curblock * BLOCK_SIZE, remainlength);
+                        // If compression is no use, just copy
+                        if (blockinfos[curblock].compressedSize == 0) {
+                            blockinfos[curblock].compressedSize = remainlength;
+                            blockinfos[curblock].flag &= ~0x3F;
+                            Buffer.BlockCopy(boundarybuf, 0, compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
+                        }
+                    }
+
+                    // Parallelly compress the data
+                    Parallel.For(0, blockcount, i => {
+                        if (compinfos[i].data == null)
+                            return;
+                        blockinfos[i].compressedSize =
+                            LZ4.LZ4Codec.Encode64Unsafe(compinfos[i].data, compinfos[i].offset, compinfos[i].length,
+                                compbuf, i * BLOCK_SIZE, BLOCK_SIZE);
+
+                        // If compression is no use, just copy
+                        if (blockinfos[i].compressedSize == 0) {
+                            blockinfos[i].compressedSize = BLOCK_SIZE;
+                            blockinfos[i].flag &= ~0x3F;
+                            Buffer.BlockCopy(compinfos[i].data, compinfos[i].offset, compbuf, i * BLOCK_SIZE, BLOCK_SIZE);
+                        }
+                    });
+                }
+
+                // Write Headers
+                UnityBinaryWriter headerwriter = new UnityBinaryWriter();
+                // Info Header
+                headerwriter.Position += 0x10;
+                // BlockInfo
+                headerwriter.WriteIntBE(blockcount);
+                blockinfos.Write(headerwriter);
+                // FileInfo
+                headerwriter.WriteIntBE(Files.Length);
+                int curoffset = 0;
+                for (int i = 0; i < Files.Length; i++) {
+                    headerwriter.WriteLongBE(curoffset);
+                    headerwriter.WriteLongBE(Files[i].Data.LongLength);
+                    headerwriter.WriteIntBE(4);
+                    headerwriter.WriteStringToNull(Files[i].Name);
+                    curoffset += Files[i].Data.Length;
+                }
+
+                // Compress and write header
+                writer.Position += 4 + 4 + 4;
+                int header_compsize = writer.WriteLZ4Data(headerwriter.ToBytes());
+                int final_pos = writer.Position;
+                writer.Position = info_offset;
+                writer.WriteIntBE(header_compsize);
+                writer.WriteIntBE(blockinfosize + fileinfosize);
+                writer.WriteIntBE(0x42);
+                writer.Position = final_pos;
+
+                // Write Blocks
+                for (int i = 0; i < blockcount; i++)
+                    writer.WriteBytes(compbuf, i * BLOCK_SIZE, blockinfos[i].compressedSize);
             }
         }
 
