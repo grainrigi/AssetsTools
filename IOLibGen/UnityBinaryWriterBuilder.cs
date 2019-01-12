@@ -794,7 +794,7 @@ namespace IOLibGen {
             il.Emit(OpCodes.Sub);
 
             il.Emit(OpCodes.Call,
-                typeof(LZ4.LZ4Codec).GetMethod("Encode64Unsafe"));
+                typeof(AssetsTools.LZ4.LZ4Codec).GetMethod("Encode64Unsafe"));
 
             il.Emit(OpCodes.Stloc_0);
 

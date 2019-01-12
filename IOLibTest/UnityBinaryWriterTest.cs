@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using AssetsTools;
 
 namespace IOLibTest {
     [TestClass]
@@ -312,7 +313,7 @@ namespace IOLibTest {
             byte[] enc = w.ToBytes();
             Assert.AreEqual<int>(enc.Length, size);
             byte[] dec = new byte[TestLZ4DecompressedData.Length];
-            LZ4.LZ4Codec.Decode(enc, 0, enc.Length, dec, 0, dec.Length);
+            AssetsTools.LZ4.LZ4Codec.Decode(enc, 0, enc.Length, dec, 0, dec.Length);
             for (int i = 0; i < TestLZ4DecompressedData.Length; i++)
                 Assert.AreEqual<byte>(TestLZ4DecompressedData[i], dec[i]);
         }

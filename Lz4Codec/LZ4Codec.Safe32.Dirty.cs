@@ -68,7 +68,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // ReSharper disable JoinDeclarationAndInitializer
 // ReSharper disable RedundantIfElseBlock
 
-namespace LZ4
+namespace AssetsTools.LZ4
 {
     public static partial class LZ4Codec
     {

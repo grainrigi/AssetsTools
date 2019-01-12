@@ -29,7 +29,7 @@ using System;
 
 // ReSharper disable InconsistentNaming
 
-namespace LZ4
+namespace AssetsTools.LZ4
 {
     public static partial class LZ4Codec
     {

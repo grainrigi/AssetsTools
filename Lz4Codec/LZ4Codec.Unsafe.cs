@@ -29,7 +29,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 
-namespace LZ4
+namespace AssetsTools.LZ4
 {
     /// <summary>Unsafe LZ4 codec.</summary>
     public static partial class LZ4Codec

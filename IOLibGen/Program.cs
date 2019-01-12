@@ -10,8 +10,8 @@ namespace IOLibGen {
     class Program {
         static void Main(string[] args) {
             AssemblyHelper assem = new AssemblyHelper("IOLib");
-            assem.CreateClass("UnityBinaryReader", UnityBinaryReaderBuilder.Builder);
-            assem.CreateClass("UnityBinaryWriter", UnityBinaryWriterBuilder.Builder);
+            assem.CreateClass("AssetsTools.UnityBinaryReader", UnityBinaryReaderBuilder.Builder);
+            assem.CreateClass("AssetsTools.UnityBinaryWriter", UnityBinaryWriterBuilder.Builder);
             assem.Save();
         }
     }
