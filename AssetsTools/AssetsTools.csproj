@@ -76,6 +76,7 @@
     <Compile Include="Extensions\BinaryReaderExtensions.cs" />
     <Compile Include="Extensions\BinaryWriterExtentions.cs" />
     <Compile Include="Extensions\StreamExtensions.cs" />
+    <Compile Include="IOLibExtentions.cs" />
     <Compile Include="ISerializable.cs" />
     <Compile Include="Lz4DecoderStream.cs" />
     <Compile Include="MemoryPool.cs" />
