@@ -28,11 +28,11 @@ namespace IOLibGen {
             Length = helper.CreateProperty("Length", typeof(int), get_LengthEmitter, null);
 
 
-            helper.CreateMethod("WriteByte", typeof(void), new[] { (typeof(byte), "value") }, WriteByteEmitter);
+            WriteByte = helper.CreateMethod("WriteByte", typeof(void), new[] { (typeof(byte), "value") }, WriteByteEmitter);
             helper.CreateMethod("WriteSByte", typeof(void), new[] { (typeof(sbyte), "value") }, WriteSByteEmitter);
 
             helper.CreateMethod("WriteShort", typeof(void), new[] { (typeof(short), "value") }, WriteShortEmitter);
-            helper.CreateMethod("WriteInt", typeof(void), new[] { (typeof(int), "value") }, WriteIntEmitter);
+            WriteInt = helper.CreateMethod("WriteInt", typeof(void), new[] { (typeof(int), "value") }, WriteIntEmitter);
             helper.CreateMethod("WriteLong", typeof(void), new[] { (typeof(long), "value") }, WriteLongEmitter);
             helper.CreateMethod("WriteFloat", typeof(void), new[] { (typeof(float), "value") }, WriteFloatEmitter);
             helper.CreateMethod("WriteDouble", typeof(void), new[] { (typeof(double), "value") }, WriteDoubleEmitter);
@@ -75,6 +75,8 @@ namespace IOLibGen {
         private static PropertyInfo Length = default(PropertyInfo);
         private static ConstructorInfo defctor = default(ConstructorInfo);
         private static MethodInfo EnsureCapacity = default(MethodInfo);
+        private static MethodInfo WriteByte = default(MethodInfo);
+        private static MethodInfo WriteInt = default(MethodInfo);
         private static MethodInfo WriteLZ4Data = default(MethodInfo);
         private static MethodInfo WriteBytes = default(MethodInfo);
         private static Type type = default(Type);
@@ -382,6 +384,15 @@ namespace IOLibGen {
             il.DeclareLocal(typeof(byte[]), true).SetLocalSymInfo("dest");
             il.DeclareLocal(typeof(int)).SetLocalSymInfo("offset");
 
+            // if length == 0, then do nothing
+            var l_cont = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldarg_3);
+            il.Emit(OpCodes.Brtrue_S, l_cont);
+            il.Emit(OpCodes.Ret);
+
+            il.MarkLabel(l_cont);
+
             // offset = this.offset;
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldfld, offset);
@@ -392,7 +403,7 @@ namespace IOLibGen {
             // 0 <= offset < bin.Length
             // 0 <= length <= bin.Length - offset
             // offset_l + length <= capacity
-            var l_cont = il.DefineLabel();
+            l_cont = il.DefineLabel();
             var l_except = il.DefineLabel();
 
             il.Emit(OpCodes.Ldarg_1);
@@ -528,13 +539,16 @@ namespace IOLibGen {
             il.DeclareLocal(typeof(int)).SetLocalSymInfo("noffset");
             il.DeclareLocal(typeof(int)).SetLocalSymInfo("offset");
 
-            // if(value?.Length == 0) return;
+            // if(value?.Length == 0) WriteByte(0) && return;
             var l_cont = il.DefineLabel();
 
             il.Emit(OpCodes.Ldarg_1);
             il.Emit(OpCodes.Dup);
             il.Emit(OpCodes.Brtrue_S, l_cont);
             il.Emit(OpCodes.Pop);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Call, WriteByte);
             il.Emit(OpCodes.Ret);
 
             il.MarkLabel(l_cont);
@@ -543,6 +557,9 @@ namespace IOLibGen {
 
             il.Emit(OpCodes.Call, typeof(string).GetProperty("Length").GetMethod);
             il.Emit(OpCodes.Brtrue_S, l_cont);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Call, WriteByte);
             il.Emit(OpCodes.Ret);
 
             il.MarkLabel(l_cont);
@@ -629,13 +646,16 @@ namespace IOLibGen {
             il.DeclareLocal(typeof(byte[]), true);
             il.DeclareLocal(typeof(int)).SetLocalSymInfo("offset");
 
-            // if(value?.Length == 0) return;
+            // if(value?.Length == 0) {WriteInt(0); return;}
             var l_cont = il.DefineLabel();
 
             il.Emit(OpCodes.Ldarg_1);
             il.Emit(OpCodes.Dup);
             il.Emit(OpCodes.Brtrue_S, l_cont);
             il.Emit(OpCodes.Pop);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Call, WriteInt);
             il.Emit(OpCodes.Ret);
 
             il.MarkLabel(l_cont);
@@ -644,6 +664,9 @@ namespace IOLibGen {
 
             il.Emit(OpCodes.Ldlen);
             il.Emit(OpCodes.Brtrue_S, l_cont);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Call, WriteInt);
             il.Emit(OpCodes.Ret);
 
             il.MarkLabel(l_cont);
@@ -912,11 +935,22 @@ namespace IOLibGen {
             il.DeclareLocal(typeof(byte[]), true);
             il.DeclareLocal(typeof(byte[]), true);
 
-            // ret = new byte[offset];
+            // ret = new byte[bound];
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldfld, bound);
             il.Emit(OpCodes.Newarr, typeof(byte));
             il.Emit(OpCodes.Stloc_0);
+
+            // if bound == 0, then return empty array(no copy)
+            var l_cont = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, bound);
+            il.Emit(OpCodes.Brtrue_S, l_cont);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Ret);
+
+            il.MarkLabel(l_cont);
 
             // Fix
             FixFileEmitter(il, OpCodes.Stloc_1);
