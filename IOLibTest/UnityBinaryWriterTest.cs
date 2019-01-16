@@ -279,7 +279,7 @@ namespace IOLibTest {
                 Assert.AreEqual<byte>(TestData[i+2], dest[i]);
             Assert.AreEqual<int>(6, dest.Length);
 
-            Assert.ThrowsException<NullReferenceException>(delegate () { w.WriteBytes(null, 0, 0); });
+            Assert.ThrowsException<NullReferenceException>(delegate () { w.WriteBytes(null, 0, 1); });
             Assert.ThrowsException<ArgumentOutOfRangeException>(delegate () { w.WriteBytes(TestData, 2, 7); });
             Assert.ThrowsException<ArgumentOutOfRangeException>(delegate () { w.WriteBytes(TestData, 3, 6); });
         }
