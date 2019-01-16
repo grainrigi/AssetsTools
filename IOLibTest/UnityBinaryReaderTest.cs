@@ -276,6 +276,15 @@ namespace IOLibTest {
         }
 
         [TestMethod]
+        public void ReadString() {
+            UnityBinaryReader r = new UnityBinaryReader(TestStringBytes);
+
+            Assert.AreEqual<string>(TestString, r.ReadString(TestStringBytes.Length));
+            // Forward Test
+            Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadByte(); });
+        }
+
+        [TestMethod]
         public void ReadStringToNull() {
             byte[] sz = new byte[TestStringBytes.Length + 1];
             Array.Copy(TestStringBytes, sz, TestStringBytes.Length);

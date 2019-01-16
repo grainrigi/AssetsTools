@@ -60,6 +60,7 @@ namespace IOLibGen {
                     (typeof(int), "length")
                 }, ReadBytesEmitter);
             helper.CreateMethod("ReadBytes", typeof(byte[]), new[] { (typeof(int), "length") }, ReadBytes_1ArgEmitter);
+            helper.CreateMethod("ReadString", typeof(string), new[] { (typeof(int), "length") }, ReadStringEmitter);
             helper.CreateMethod("ReadStringToNull", typeof(string), ReadStringToNullEmitter);
             helper.CreateGenericMethodWithArrayReturn("ReadValueArray", ReadArrayEmitter);
             helper.CreateMethod("ReadLZ4Data", typeof(int),
@@ -890,6 +891,73 @@ namespace IOLibGen {
 
             // return dest;
             il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Ret);
+        }
+
+        private static void ReadStringEmitter(ILGenerator il) {
+            // Boundary Check
+            // 0 <= length
+            // offset + length <= bound
+            var l_cont = il.DefineLabel();
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Bge_S, l_cont);
+            il.Emit(OpCodes.Ldstr, "length");
+            il.Emit(OpCodes.Newobj,
+                typeof(ArgumentOutOfRangeException).GetConstructor(
+                    new Type[] { typeof(string) }));
+            il.Emit(OpCodes.Throw);
+
+            il.MarkLabel(l_cont);
+            l_cont = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, bound);
+            il.Emit(OpCodes.Ble_S, l_cont);
+            il.Emit(OpCodes.Newobj,
+                typeof(IndexOutOfRangeException).GetConstructor(Type.EmptyTypes));
+            il.Emit(OpCodes.Throw);
+
+            il.MarkLabel(l_cont);
+            l_cont = il.DefineLabel();
+
+            // if length == 0 then return empty string
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Brtrue_S, l_cont);
+            il.Emit(OpCodes.Ldstr, "");
+            il.Emit(OpCodes.Ret);
+
+            il.MarkLabel(l_cont);
+
+            // string str = Encoding.UTF8.GetString(file, offset, length);
+            il.Emit(OpCodes.Call,
+                typeof(Encoding).GetProperty("UTF8").GetMethod);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, file);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, offset);
+
+            il.Emit(OpCodes.Ldarg_1);
+
+            il.Emit(OpCodes.Callvirt,
+                typeof(Encoding).GetMethod("GetString",
+                    new Type[] { typeof(byte[]), typeof(int), typeof(int) }));
+
+            // offset += length
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Stfld, offset);
+
+            // return str;
             il.Emit(OpCodes.Ret);
         }
 
