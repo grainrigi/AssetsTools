@@ -30,6 +30,7 @@ namespace IOLibGen {
 
             WriteByte = helper.CreateMethod("WriteByte", typeof(void), new[] { (typeof(byte), "value") }, WriteByteEmitter);
             helper.CreateMethod("WriteSByte", typeof(void), new[] { (typeof(sbyte), "value") }, WriteSByteEmitter);
+            helper.CreateMethod("WriteBool", typeof(void), new[] { (typeof(bool), "value") }, WriteBoolEmitter);
 
             helper.CreateMethod("WriteShort", typeof(void), new[] { (typeof(short), "value") }, WriteShortEmitter);
             WriteInt = helper.CreateMethod("WriteInt", typeof(void), new[] { (typeof(int), "value") }, WriteIntEmitter);
@@ -147,6 +148,20 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ldfld, file);
             il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Stelem_I1);
+            ForwardEmitter(il, OpCodes.Ldc_I4_1);
+            UpdateBoundEmitter(il);
+            il.Emit(OpCodes.Ret);
+        }
+
+        private static void WriteBoolEmitter(ILGenerator il) {
+            BoundaryCheckEmitter(il, OpCodes.Ldc_I4_1);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, file);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Conv_U1);
             il.Emit(OpCodes.Stelem_I1);
             ForwardEmitter(il, OpCodes.Ldc_I4_1);
             UpdateBoundEmitter(il);

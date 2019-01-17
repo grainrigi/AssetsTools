@@ -34,6 +34,7 @@ namespace IOLibGen {
 
             helper.CreateMethod("ReadByte", typeof(byte), ReadByteEmitter);
             helper.CreateMethod("ReadSByte", typeof(sbyte), ReadSByteEmitter);
+            helper.CreateMethod("ReadBool", typeof(bool), ReadBoolEmitter);
             helper.CreateMethod("ReadShort", typeof(short), ReadShortEmitter);
             ReadInt = helper.CreateMethod("ReadInt", typeof(int), ReadIntEmitter);
             helper.CreateMethod("ReadLong", typeof(long), ReadLongEmitter);
@@ -403,6 +404,19 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ldfld, file);
             il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Ldelem_I1);
+            ForwardEmitter(il, OpCodes.Ldc_I4_1);
+            il.Emit(OpCodes.Ret);
+        }
+
+        private static void ReadBoolEmitter(ILGenerator il) {
+            BoundaryCheckEmitter(il, OpCodes.Ldc_I4_1);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, file);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Ldelem_I1);
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Cgt_Un);
             ForwardEmitter(il, OpCodes.Ldc_I4_1);
             il.Emit(OpCodes.Ret);
         }

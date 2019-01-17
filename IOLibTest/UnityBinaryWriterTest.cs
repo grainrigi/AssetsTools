@@ -87,6 +87,20 @@ namespace IOLibTest {
         }
 
         [TestMethod]
+        public void WriteBool() {
+            UnityBinaryWriter w = new UnityBinaryWriter();
+
+            w.WriteBool(true);
+            w.WriteBool(false);
+            w.WriteBool(true);
+            byte[] res = w.ToBytes();
+            Assert.AreEqual<byte>(1, res[0]);
+            Assert.AreEqual<byte>(0, res[1]);
+            Assert.AreEqual<byte>(1, res[2]);
+            Assert.AreEqual<long>(3L, res.LongLength);
+        }
+
+        [TestMethod]
         public void WriteShort() {
             UnityBinaryWriter w = new UnityBinaryWriter();
 

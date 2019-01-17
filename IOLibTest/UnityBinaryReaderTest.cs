@@ -111,6 +111,15 @@ namespace IOLibTest {
         }
 
         [TestMethod]
+        public void ReadBool() {
+            byte[] data = new byte[3] { 0x01, 0x00, 0x03 };
+            UnityBinaryReader r = new UnityBinaryReader(data);
+            Assert.AreEqual<bool>(true, r.ReadBool());
+            Assert.AreEqual<bool>(false, r.ReadBool());
+            Assert.AreEqual<bool>(true, r.ReadBool());
+        }
+
+        [TestMethod]
         public void ReadShort() {
             UnityBinaryReader r = new UnityBinaryReader(TestData);
 
