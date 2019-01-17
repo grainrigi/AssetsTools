@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace AssetsTools {
-    public static class IOLibExtentions {
+    public static class IOLibExtensions {
         public static void Align(this UnityBinaryReader reader, int align) {
             var mod = reader.Position % align;
             if (mod != 0)
