@@ -151,15 +151,9 @@ namespace AssetsTools {
                         // If previous file has overflow, concat and compress
                         if (remainlength > 0) {
                             Buffer.BlockCopy(Files[i].Data, 0, boundarybuf, remainlength, BLOCK_SIZE - remainlength);
-                            blockinfos[curblock].compressedSize = 
-                                LZ4.LZ4Codec.Encode64Unsafe(boundarybuf, 0, BLOCK_SIZE,
-                                    compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
-                            // If compression is no use, just copy
-                            if(blockinfos[curblock].compressedSize == 0) { 
-                                blockinfos[curblock].compressedSize = BLOCK_SIZE;
+                            blockinfos[curblock].compressedSize = TryLZ4Compress(boundarybuf, 0, compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
+                            if(blockinfos[curblock]. compressedSize == BLOCK_SIZE)
                                 blockinfos[curblock].flag &= ~0x3F;
-                                Buffer.BlockCopy(boundarybuf, 0, compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
-                            }
                             curblock++;
                         }
 
@@ -171,15 +165,9 @@ namespace AssetsTools {
                         // compress fullblocks
                         int fullblockcount = (Files[i].Data.Length - blockstart) / BLOCK_SIZE;
                         for(int j = 0; j < fullblockcount; j++, curblock++) {
-                            blockinfos[curblock].compressedSize = 
-                                LZ4.LZ4Codec.Encode64Unsafe(Files[i].Data, blockstart + j * BLOCK_SIZE, BLOCK_SIZE,
-                                    compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
-                            // If compression is no use, just copy
-                            if (blockinfos[curblock].compressedSize == 0) { 
-                                blockinfos[curblock].compressedSize = BLOCK_SIZE;
+                            blockinfos[curblock].compressedSize = TryLZ4Compress(Files[i].Data, blockstart + j * BLOCK_SIZE, compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
+                            if (blockinfos[curblock].compressedSize == BLOCK_SIZE)
                                 blockinfos[curblock].flag &= ~0x3F;
-                                Buffer.BlockCopy(Files[i].Data, blockstart + j * BLOCK_SIZE, compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
-                            }
                         }
 
                         // If the file has remaindata, buffer them
@@ -188,15 +176,9 @@ namespace AssetsTools {
                             Buffer.BlockCopy(Files[i].Data, Files[i].Data.Length - remainlength, boundarybuf, 0, remainlength);
                     }
                     if(remainlength > 0) { // Process last block
-                        blockinfos[curblock].compressedSize =
-                                LZ4.LZ4Codec.Encode64Unsafe(boundarybuf, 0, remainlength,
-                                    compbuf, curblock * BLOCK_SIZE, remainlength);
-                        // If compression is no use, just copy
-                        if (blockinfos[curblock].compressedSize == 0) {
-                            blockinfos[curblock].compressedSize = remainlength;
+                        blockinfos[curblock].compressedSize = TryLZ4Compress(boundarybuf, 0, compbuf, curblock * BLOCK_SIZE, remainlength);
+                        if (blockinfos[curblock].compressedSize == remainlength)
                             blockinfos[curblock].flag &= ~0x3F;
-                            Buffer.BlockCopy(boundarybuf, 0, compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
-                        }
                     }
                 }
                 else {
@@ -209,15 +191,9 @@ namespace AssetsTools {
                         // If previous file has overflow, concat and compress
                         if (remainlength > 0) {
                             Buffer.BlockCopy(Files[i].Data, 0, boundarybuf, remainlength, BLOCK_SIZE - remainlength);
-                            blockinfos[curblock].compressedSize =
-                                LZ4.LZ4Codec.Encode64Unsafe(boundarybuf, 0, BLOCK_SIZE,
-                                    compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
-                            // If compression is no use, just copy
-                            if (blockinfos[curblock].compressedSize == 0) {
-                                blockinfos[curblock].compressedSize = BLOCK_SIZE;
+                            blockinfos[curblock].compressedSize = TryLZ4Compress(boundarybuf, 0, compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
+                            if (blockinfos[curblock].compressedSize == BLOCK_SIZE)
                                 blockinfos[curblock].flag &= ~0x3F;
-                                Buffer.BlockCopy(boundarybuf, 0, compbuf, curblock * BLOCK_SIZE, BLOCK_SIZE);
-                            }
                             curblock++;
                         }
 
@@ -253,16 +229,9 @@ namespace AssetsTools {
                     Parallel.For(0, blockcount, i => {
                         if (compinfos[i].data == null)
                             return;
-                        blockinfos[i].compressedSize =
-                            LZ4.LZ4Codec.Encode64Unsafe(compinfos[i].data, compinfos[i].offset, compinfos[i].length,
-                                compbuf, i * BLOCK_SIZE, BLOCK_SIZE);
-
-                        // If compression is no use, just copy
-                        if (blockinfos[i].compressedSize == 0) {
-                            blockinfos[i].compressedSize = BLOCK_SIZE;
+                        blockinfos[i].compressedSize = TryLZ4Compress(compinfos[i].data, compinfos[i].offset, compbuf, i * BLOCK_SIZE, compinfos[i].length);
+                        if (blockinfos[i].compressedSize == BLOCK_SIZE)
                             blockinfos[i].flag &= ~0x3F;
-                            Buffer.BlockCopy(compinfos[i].data, compinfos[i].offset, compbuf, i * BLOCK_SIZE, BLOCK_SIZE);
-                        }
                     });
                 }
 
@@ -298,6 +267,16 @@ namespace AssetsTools {
                 for (int i = 0; i < blockcount; i++)
                     writer.WriteBytes(compbuf, i * BLOCK_SIZE, blockinfos[i].compressedSize);
             }
+        }
+
+        private int TryLZ4Compress(byte[] src, int srcOffset, byte[] dest, int destOffset, int length) {
+            int compsize = LZ4.LZ4Codec.Encode64Unsafe(src, srcOffset, length, dest, destOffset, length - 1);
+            // If compression is no use, just copy
+            if (compsize == 0) {
+                Buffer.BlockCopy(src, srcOffset, dest, destOffset, length);
+                return length;
+            }
+            return compsize;
         }
 
         private struct BlockInfo : ISerializable {
