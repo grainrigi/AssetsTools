@@ -63,16 +63,12 @@
     <Compile Include="AssetsFile.Objects.cs" />
     <Compile Include="AssetsFile.Scripts.cs" />
     <Compile Include="BuildTarget.cs" />
-    <Compile Include="Class1.cs" />
     <Compile Include="ClassIDType.cs" />
     <Compile Include="Color4.cs" />
     <Compile Include="DynamicAsset.Deserializer.cs" />
     <Compile Include="DynamicAsset.CodeGen.cs" />
     <Compile Include="DynamicAsset.cs" />
     <Compile Include="DynamicAssetArray.cs" />
-    <Compile Include="Extensions\BinaryReaderExtensions.cs" />
-    <Compile Include="Extensions\BinaryWriterExtentions.cs" />
-    <Compile Include="Extensions\StreamExtensions.cs" />
     <Compile Include="ILGeneratorExtension.cs" />
     <Compile Include="IOLibExtensions.cs" />
     <Compile Include="ISerializable.cs" />
