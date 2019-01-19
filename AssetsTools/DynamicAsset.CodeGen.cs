@@ -16,7 +16,6 @@ namespace AssetsTools {
 
         private static ConstructorInfo DynamicAssetArrayCtor = typeof(DynamicAssetArray).GetConstructor(new Type[] { typeof(int), typeof(string) });
         private static FieldInfo DynamicAssetArrayelems = typeof(DynamicAssetArray).GetField("elems", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Instance);
-        private static MethodInfo DynamicAssetArrayAdd = typeof(DynamicAssetArray).GetMethod("Add", BindingFlags.InvokeMethod | BindingFlags.NonPublic | BindingFlags.Instance);
 
         private static MethodInfo ReadInt = typeof(UnityBinaryReader).GetMethod("ReadInt", Type.EmptyTypes);
         private static MethodInfo ReadString = typeof(UnityBinaryReader).GetMethod("ReadString", new Type[] { typeof(int) });
