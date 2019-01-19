@@ -686,12 +686,13 @@ namespace IOLibGen {
 
             il.MarkLabel(l_cont);
 
-            // fix
-            il.Emit(OpCodes.Ldarg_1);
+            // Calc copy size
+            // testary = new T[2];
+            // copysize = (&testary[1] - &testary[0]) * value.Length;
+            il.Emit(OpCodes.Ldc_I4_2);
+            il.Emit(OpCodes.Newarr, T);
             il.Emit(OpCodes.Stloc_0);
-            FixFileEmitter(il, OpCodes.Stloc_2);
 
-            // copysize = (&value[1] - &value[0]) * value.Length;
             il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Ldc_I4_1);
             il.Emit(OpCodes.Ldelema, T);
@@ -705,12 +706,17 @@ namespace IOLibGen {
             il.Emit(OpCodes.Sub);
             il.Emit(OpCodes.Conv_I8);
 
-            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Ldarg_1);
             il.Emit(OpCodes.Ldlen);
             il.Emit(OpCodes.Conv_I8);
             il.Emit(OpCodes.Mul);
 
             il.Emit(OpCodes.Stloc_1);
+
+            // fix
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Stloc_0);
+            FixFileEmitter(il, OpCodes.Stloc_2);
 
             // Boundary Check
             // Check(copysize + offset + 4  <= capacity);

@@ -1078,21 +1078,32 @@ namespace IOLibGen {
             il.DeclareLocal(T.MakeArrayType(), true);
             il.DeclareLocal(typeof(long)).SetLocalSymInfo("copysize");
             il.DeclareLocal(typeof(byte[]), true);
+            il.DeclareLocal(typeof(int));
 
             // Read index
             // cnt = ReadInt();
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Call, ReadInt);
+            il.Emit(OpCodes.Stloc_3);
 
-            // PrepareBuffer
-            // buf = new T[cnt];(fixed)
-            // fixed(file)
+            // If length == 0 then return
+            var l_cont = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldloc_3);
+            il.Emit(OpCodes.Brtrue_S, l_cont);
+            il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Newarr, T);
-            il.Emit(OpCodes.Stloc_0);
-            FixFileEmitter(il, OpCodes.Stloc_2);
+            il.Emit(OpCodes.Ret);
+
+            il.MarkLabel(l_cont);
 
             // Calc copy size
-            // copysize = (&buf[1] - &buf[0]) * buf.Length;
+            // testary = new T[2];
+            // copysize = (&testary[1] - &testary[0]) * cnt;
+            il.Emit(OpCodes.Ldc_I4_2);
+            il.Emit(OpCodes.Newarr, T);
+            il.Emit(OpCodes.Stloc_0);
+
             il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Ldc_I4_1);
             il.Emit(OpCodes.Ldelema, T);
@@ -1106,16 +1117,23 @@ namespace IOLibGen {
             il.Emit(OpCodes.Sub);
             il.Emit(OpCodes.Conv_I8);
 
-            il.Emit(OpCodes.Ldloc_0);
-            il.Emit(OpCodes.Ldlen);
+            il.Emit(OpCodes.Ldloc_3);
             il.Emit(OpCodes.Conv_I8);
             il.Emit(OpCodes.Mul);
 
             il.Emit(OpCodes.Stloc_1);
 
+            // PrepareBuffer
+            // buf = new T[cnt];(fixed)
+            // fixed(file)
+            il.Emit(OpCodes.Ldloc_3);
+            il.Emit(OpCodes.Newarr, T);
+            il.Emit(OpCodes.Stloc_0);
+            FixFileEmitter(il, OpCodes.Stloc_2);
+
             // Boundary Check
             // Check(copysize + offset <= bound);
-            var l_cont = il.DefineLabel();
+            l_cont = il.DefineLabel();
 
             il.Emit(OpCodes.Ldloc_1);
             il.Emit(OpCodes.Ldarg_0);
