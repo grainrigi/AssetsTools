@@ -17,5 +17,11 @@ namespace AssetsTools {
             if (mod != 0)
                 writer.Position += align - mod;
         }
+        
+        public static string ReadAlignedString(this UnityBinaryReader reader) {
+            string str = reader.ReadString(reader.ReadInt());
+            reader.Align(4);
+            return str;
+        }
     }
 }
