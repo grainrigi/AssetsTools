@@ -14,7 +14,12 @@ namespace AssetsTools {
             objects = new Dictionary<string, object>();
         }
 
-        public DynamicAsset(Dictionary<string, object> dic) {
+#if DEBUG
+        public
+#else
+        internal
+#endif
+            DynamicAsset(Dictionary<string, object> dic) {
             objects = dic;
         }
 

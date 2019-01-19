@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace AssetsTools {
-    public static class MemoryPool<T> {
+    internal static class MemoryPool<T> {
         private const int DEFAULT_SIZE = 65535;
 
         private static byte[] buf = null;
@@ -26,7 +26,7 @@ namespace AssetsTools {
         }
     }
 
-    public static class MiniMemoryPool<T> {
+    internal static class MiniMemoryPool<T> {
         private const int DEFAULT_SIZE = 255;
 
         private static byte[] buf = null;

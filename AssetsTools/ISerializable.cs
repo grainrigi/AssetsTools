@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 using System.IO;
 
 namespace AssetsTools {
-    public interface ISerializable {
+    internal interface ISerializable {
         void Read(UnityBinaryReader reader);
         void Write(UnityBinaryWriter writer);
     }
 
-    public static class ISerializableArrayExtensions {
+    internal static class ISerializableArrayExtensions {
         public static void Read<T>(this T[] ary, UnityBinaryReader reader) where T : ISerializable {
             for (int i = 0; i < ary.Length; i++)
                 ary[i].Read(reader);

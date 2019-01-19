@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Reflection.Emit;
 
 namespace AssetsTools {
-    public static class ILGeneratorExtension {
+    internal static class ILGeneratorExtension {
         public static void EmitLdloc(this ILGenerator il, int i) {
             switch (i) {
                 default:

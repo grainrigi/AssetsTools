@@ -12,10 +12,28 @@ namespace AssetsTools {
         private static ConstructorInfo DicStrObjCtor = typeof(Dictionary<string, object>).GetConstructor(new Type[] { typeof(int) });
         private static MethodInfo DicStrObjAdd = typeof(Dictionary<string, object>).GetMethod("Add", new Type[] { typeof(string), typeof(object) });
 
-        private static ConstructorInfo DynamicAssetCtor = typeof(DynamicAsset).GetConstructor(BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(Dictionary<string, object>) }, null);
+        private static ConstructorInfo DynamicAssetCtor = typeof(DynamicAsset).GetConstructor(BindingFlags.InvokeMethod |
+#if DEBUG
+            BindingFlags.Public
+#else
+            BindingFlags.NonPublic
+#endif
+            | BindingFlags.Instance, null, new Type[] { typeof(Dictionary<string, object>) }, null);
 
-        private static ConstructorInfo DynamicAssetArrayCtor = typeof(DynamicAssetArray).GetConstructor(new Type[] { typeof(int), typeof(string) });
-        private static FieldInfo DynamicAssetArrayelems = typeof(DynamicAssetArray).GetField("elems", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Instance);
+        private static ConstructorInfo DynamicAssetArrayCtor = typeof(DynamicAssetArray).GetConstructor(BindingFlags.InvokeMethod |
+#if DEBUG
+            BindingFlags.Public
+#else
+            BindingFlags.NonPublic
+#endif
+            | BindingFlags.Instance, null, new Type[] { typeof(int), typeof(string) }, null);
+        private static FieldInfo DynamicAssetArrayelems = typeof(DynamicAssetArray).GetField("elems", BindingFlags.InvokeMethod |
+#if DEBUG
+            BindingFlags.Public
+#else
+            BindingFlags.NonPublic
+#endif
+            | BindingFlags.Instance);
 
         private static MethodInfo ReadInt = typeof(UnityBinaryReader).GetMethod("ReadInt", Type.EmptyTypes);
         private static MethodInfo ReadString = typeof(UnityBinaryReader).GetMethod("ReadString", new Type[] { typeof(int) });
