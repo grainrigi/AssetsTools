@@ -9,14 +9,18 @@ using System.Reflection.Emit;
 namespace AssetsTools {
     public partial class DynamicAsset {
         private static Type DicStrObjType = typeof(Dictionary<string, object>);
-        private static ConstructorInfo DicStrObjCtor = typeof(Dictionary<string, object>).GetConstructor(Type.EmptyTypes);
+        private static ConstructorInfo DicStrObjCtor = typeof(Dictionary<string, object>).GetConstructor(new Type[] { typeof(int) });
         private static MethodInfo DicStrObjAdd = typeof(Dictionary<string, object>).GetMethod("Add", new Type[] { typeof(string), typeof(object) });
 
+        private static ConstructorInfo DynamicAssetCtor = typeof(DynamicAsset).GetConstructor(BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(Dictionary<string, object>) }, null);
+
         private static ConstructorInfo DynamicAssetArrayCtor = typeof(DynamicAssetArray).GetConstructor(new Type[] { typeof(int), typeof(string) });
-        private static MethodInfo DynamicAssetArrayAdd = typeof(DynamicAssetArray).GetMethod("Add", new Type[] { typeof(Dictionary<string, object>) });
+        private static FieldInfo DynamicAssetArrayelems = typeof(DynamicAssetArray).GetField("elems", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Instance);
+        private static MethodInfo DynamicAssetArrayAdd = typeof(DynamicAssetArray).GetMethod("Add", BindingFlags.InvokeMethod | BindingFlags.NonPublic | BindingFlags.Instance);
 
         private static MethodInfo ReadInt = typeof(UnityBinaryReader).GetMethod("ReadInt", Type.EmptyTypes);
         private static MethodInfo ReadString = typeof(UnityBinaryReader).GetMethod("ReadString", new Type[] { typeof(int) });
+        private static MethodInfo ReadAlignedString = typeof(IOLibExtensions).GetMethod("ReadAlignedString");
         private static MethodInfo ReadValueArray = typeof(UnityBinaryReader).GetMethod("ReadValueArray", Type.EmptyTypes);
         private static MethodInfo AlignReader = typeof(IOLibExtensions).GetMethod("Align", new Type[] { typeof(UnityBinaryReader), typeof(int) });
 
@@ -51,16 +55,15 @@ namespace AssetsTools {
             { typeof(long), typeof(UnityBinaryReader).GetMethod("ReadLong", Type.EmptyTypes) },
             { typeof(ulong), typeof(UnityBinaryReader).GetMethod("ReadULong", Type.EmptyTypes) },
             { typeof(bool), typeof(UnityBinaryReader).GetMethod("ReadBool", Type.EmptyTypes) },
+            { typeof(float), typeof(UnityBinaryReader).GetMethod("ReadFloat", Type.EmptyTypes) },
+            { typeof(double), typeof(UnityBinaryReader).GetMethod("ReadDouble", Type.EmptyTypes) },
         };
 
         private static Dictionary<string, Type> KnownTypeDic = new Dictionary<string, Type> {
         };
 
-        private static Dictionary<Type, Action<GenDeserializerContext>> KnownTypeGenReadDic = new Dictionary<Type, Action<GenDeserializerContext>> {
-        };
-
         private static string PrettifyName(string name) {
-            return name.Replace(' ', '_');
+            return name.Replace(' ', '_').Replace("[", "").Replace("]","");
         }
     }
 }

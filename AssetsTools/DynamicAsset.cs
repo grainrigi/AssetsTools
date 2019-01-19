@@ -10,11 +10,11 @@ namespace AssetsTools {
 
         private Dictionary<string, object> objects;
 
-        internal DynamicAsset() {
+        public DynamicAsset() {
             objects = new Dictionary<string, object>();
         }
 
-        internal DynamicAsset(Dictionary<string, object> dic) {
+        public DynamicAsset(Dictionary<string, object> dic) {
             objects = dic;
         }
 

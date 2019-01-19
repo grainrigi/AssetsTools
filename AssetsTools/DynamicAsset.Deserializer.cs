@@ -8,196 +8,105 @@ using System.Reflection.Emit;
 
 namespace AssetsTools {
     public partial class DynamicAsset {
-        /*
-        private struct DynamicAssetBuc.ilder {
-            UnityBinaryReader _reader;
-            TypeTree.Node[] _nodes;
-            int _index;
+        public static Func<UnityBinaryReader, DynamicAsset> GenDeserializer(TypeTree.Node[] nodes) {
+            DynamicMethod method = new DynamicMethod(nodes[0].Type, typeof(DynamicAsset), new Type[] { typeof(UnityBinaryReader) }, m: typeof(DynamicAssetArray).Module, skipVisibility: true);
 
-            public DynamicAssetBuc.ilder(UnityBinaryReader reader, SerializedType type) {
-                _reader = reader;
-                _nodes = type.TypeTree.Nodes;
-                _index = 0;
-            }
+            DeserializerBuilder builder = new DeserializerBuilder(nodes);
+            builder.Build(method.GetILGenerator());
 
-            public DynamicAsset Buc.ild() {
-                // Skip Base
-                _index++;
+            return (Func<UnityBinaryReader, DynamicAsset>)method.CreateDelegate(typeof(Func<UnityBinaryReader, DynamicAsset>));
+        }
 
-                // Recursively Decode
-                DynamicAsset asset = new DynamicAsset();
-                var objs = asset.objects;
+#if DEBUG
+        private static AssemblyName _name;
+        private static AssemblyBuilder _assembly = null;
+        private static ModuleBuilder _module;
+        public static TypeBuilder _type;
 
-                int mindepth = _nodes[_index].Level;
+        private static void InitAssembly() {
+            string name = "Deserializer";
 
-                // For general object
-                DynamicAssetBuc.ilder buc.ilder;
-                buc.ilder._reader = _reader;
-                buc.ilder._nodes = _nodes;
-                buc.ilder._index = _index;
+            _name = new AssemblyName { Name = name };
+            _assembly = AppDomain.CurrentDomain.DefineDynamicAssembly(_name, AssemblyBuilderAccess.RunAndSave);
+            _module = _assembly.DefineDynamicModule(name, name + ".dll", true);
 
-                whc.ile(_index < _nodes.Length && _nodes[_index].Level >= mindepth) {
-                    string name = _nodes[_index].Name;
-                    object value;
+            
+            _type = _module.DefineType(name, System.Reflection.TypeAttributes.Public);
+        }
 
-                    if(TryKnownType(out value)) {
-                        objs[name] = value;
-                        continue;
+        public static MethodBuilder GenDeserializerAssembly(TypeTree.Node[] nodes) {
+            if (_assembly == null)
+                InitAssembly();
+
+            string name = nodes[0].Type;
+
+            MethodBuilder method = _type.DefineMethod(
+                name,
+                MethodAttributes.Public | MethodAttributes.Static,
+                typeof(DynamicAsset), new Type[] { typeof(UnityBinaryReader) });
+
+            DeserializerBuilder builder = new DeserializerBuilder(nodes);
+            builder.Build(method.GetILGenerator());
+
+            return method;
+        }
+
+        public static void SaveAssembly(string filename) {
+            Type _des = _type.CreateType();
+            _assembly.Save(filename);
+        }
+#endif
+        private class DeserializerBuilder {
+            ILGenerator il;
+            NodeTree root;
+
+            private struct NodeTree {
+                public string Name;
+                public string Type;
+                public bool IsAligned;
+
+                public List<NodeTree> Children;
+
+                public bool HasChildren => Children != null;
+
+                public static NodeTree FromNodes(TypeTree.Node[] nodes) {
+                    int i = 0;
+                    return readNodes(nodes, ref i);
+                }
+
+                private static NodeTree readNodes(TypeTree.Node[] nodes, ref int i) {
+                    NodeTree ret;
+                    ret.Name = nodes[i].Name;
+                    ret.Type = nodes[i].Type;
+                    ret.IsAligned = (nodes[i].MetaFlag & 0x4000) != 0;
+                    ret.Children = null;
+
+                    if (i < nodes.Length - 1) { // May have children
+                        if (nodes[i].Level < nodes[i + 1].Level) { // Has children
+                            var list = ret.Children = new List<NodeTree>();
+                            i++;
+                            var mindepth = nodes[i].Level;
+
+                            while (i < nodes.Length && nodes[i].Level >= mindepth) {
+                                list.Add(readNodes(nodes, ref i));
+                            }
+                        }
+                        else // Leaf node
+                            i++;
                     }
+                    else // Leaf node
+                        i++;
 
-
+                    return ret;
                 }
             }
 
-            private bool TryKnownType(out object boxed) {
-                switch(_nodes[_index].Type) {
-                    default:
-                        boxed = null;
-                        return false;
-                    case "SInt8":
-                        boxed = _reader.ReadSByte();
-                        break;
-                    case "UInt8":
-                        boxed = _reader.ReadByte();
-                        break;
-                    case "short":
-                    case "SInt16":
-                        boxed = _reader.ReadShort();
-                        break;
-                    case "UInt16":
-                    case "unsigned short":
-                        boxed = _reader.ReadUShort();
-                        break;
-                    case "int":
-                    case "SInt32":
-                        boxed = _reader.ReadInt();
-                        break;
-                    case "UInt32":
-                    case "unsigned int":
-                    case "Type*":
-                        boxed = _reader.ReadUInt();
-                        break;
-                    case "long long":
-                    case "SInt64":
-                        boxed = _reader.ReadLong();
-                        break;
-                    case "UInt64":
-                    case "unsigned long long":
-                        boxed = _reader.ReadULong();
-                        break;
-                    case "string":
-                        boxed = ReadAlignedString();
-                        return true;
-                    case "vector":
-                        boxed = ReadArray();
-                        return true;
-                    case "TypelessData":
-                        boxed = _reader.ReadValueArray<byte>();
-                        _index += 3;
-                        return true;
-                }
-
-                _index++;
-                return true;
-            }
-
-            private string ReadAlignedString() {
-                var length = _reader.ReadInt();
-
-                byte[] utf8 = MiniMemoryPool<DynamicAssetBuc.ilder>.GetBuffer(length);
-                _reader.ReadBytes(utf8, 0, length);
-                string str = Encoding.UTF8.GetString(utf8);
-
-                _reader.Align(4);
-                _index += 4;
-
-                return str;
-            }
-
-            private object ReadArray() {
-                var elemindex = _index += 3;
-
-                // Try Known Type
-                switch (_nodes[_index].Type) {
-                    default:
-                        break;
-                    case "SInt8":
-                        return _reader.ReadValueArray<sbyte>();
-                    case "UInt8":
-                        return _reader.ReadValueArray<byte>();
-                    case "short":
-                    case "SInt16":
-                        return _reader.ReadValueArray<short>();
-                    case "UInt16":
-                    case "unsigned short":
-                        return _reader.ReadValueArray<ushort>();
-                    case "int":
-                    case "SInt32":
-                        return _reader.ReadValueArray<int>();
-                    case "UInt32":
-                    case "unsigned int":
-                    case "Type*":
-                        return _reader.ReadValueArray<uint>();
-                    case "long long":
-                    case "SInt64":
-                        return _reader.ReadValueArray<long>();
-                    case "UInt64":
-                    case "unsigned long long":
-                        return _reader.ReadValueArray<ulong>();
-                    case "string": 
-                        {
-                            string[] ret = new string[_reader.ReadInt()];
-                            for (int i = 0; i < ret.Length; i++) {
-                                _index = elemindex;
-                                ret[i] = ReadAlignedString();
-                            }
-                            return ret;
-                        }
-                    case "vector":
-                        {
-                            object[] ret = new object[_reader.ReadInt()];
-                            for (int i = 0; i < ret.Length; i++) {
-                                _index = elemindex;
-                                ret[i] = ReadArray();
-                            }
-                            return ret;
-                        }
-
-                }
-
-                // Buc.ild DynamicAsset array
-                object[] darr = new DynamicAsset[_reader.ReadInt()];
-                DynamicAssetBuc.ilder buc.ilder;
-                buc.ilder._reader = _reader;
-                buc.ilder._index = elemindex;
-                buc.ilder._nodes = _nodes;
-
-                for(int i = 0; i < darr.Length; i++) {
-                    buc.ilder._index = elemindex;
-                    darr[i] = buc.ilder.Buc.ild();
-                }
-
-                return darr;
-            }
-
-            private object ReadDictionary() {
-                // First, determine key type
-                System.Reflection.Emit.
-            }
-        }*/
-
-        
-
-        private class GenDeserializerContext {
-            public ILGenerator il;
-            public TypeTree.Node[] nodes;
-            public int i;
-            public List<string> types;
-
+            #region LocalManager
             Dictionary<Type, List<int>> local_table = new Dictionary<Type, List<int>>();
             byte local_count;
+            int ret_local = -1;
 
-            public int AllocLocal(Type type) {
+            private int AllocLocal(Type type) {
                 List<int> list;
                 if(!local_table.TryGetValue(type, out list)) {
                     list = new List<int>(16);
@@ -223,242 +132,271 @@ namespace AssetsTools {
             public void ReleaseLocal(Type type) {
                 local_table[type][0]--;
             }
-        }
 
-        private static Func<UnityBinaryReader, Dictionary<string, object>> GenDeserializer(TypeTree.Node[] nodes) {
-            DynamicMethod method = new DynamicMethod(nodes[0].Type, DicStrObjType, new Type[] { typeof(UnityBinaryReader) }, m: typeof(DynamicAssetArray).Module, skipVisibility: true);
+            public void ReturnLocal(Type type) {
+                List<int> list = local_table[type];
+                ret_local = list[list[0]];
+                list[0]--;
+            }
 
-            GenDeserializerContext c = new GenDeserializerContext();
-            c.il = method.GetILGenerator();
-            c.nodes = nodes;
-            c.i = 0;
-            c.types = new List<string>(32);
+            public int GetRetLocal() {
+                return ret_local;
+            }
+            #endregion
 
-            GenReadObject(c);
+            #region ProtoNameManager
+            List<string> types = new List<string>(32);
 
-            return (Func<UnityBinaryReader, Dictionary<string, object>>)method.CreateDelegate(typeof(Func<UnityBinaryReader, Dictionary<string, object>>));
-        }
+            private void PushType(string name) {
+                types.Add(name);
+            }
 
-#if DEBUG
-        private static AssemblyName _name;
-        private static AssemblyBuilder _assembly = null;
-        private static ModuleBuilder _module;
-        private static TypeBuilder _type;
+            private void PopType() {
+                types.RemoveAt(types.Count - 1);
+            }
 
-        private static void InitAssembly() {
-            string name = "Deserializer";
+            private string GetFQN(string name) {
+                return types.Aggregate((a, b) => a + "." + b) + "." + name;
+            }
+            #endregion
 
-            _name = new AssemblyName { Name = name };
-            _assembly = AppDomain.CurrentDomain.DefineDynamicAssembly(_name, AssemblyBuilderAccess.RunAndSave);
-            _module = _assembly.DefineDynamicModule(name, name + ".dll", true);
+            public DeserializerBuilder(TypeTree.Node[] nodes) {
+                this.il = null;
+                root = NodeTree.FromNodes(nodes);
+            }
 
-            
-            _type = _module.DefineType(name, System.Reflection.TypeAttributes.Public);
-        }
+            public void Build(ILGenerator il) {
+                this.il = il;
+                GenReadObject(root);
+                il.Emit(OpCodes.Ret);
+            }
 
-        public static void GenDeserializerAssembly(TypeTree.Node[] nodes) {
-            if (_assembly == null)
-                InitAssembly();
+            private void GenReadObject(NodeTree node) {
+                PushType(node.Type);
 
-            string name = nodes[0].Type;
+                // Init Dictionary
+                il.Emit(OpCodes.Ldc_I4, (int)node.Children.Count);
+                il.Emit(OpCodes.Newobj, DicStrObjCtor);
 
-            MethodBuilder method = _type.DefineMethod(
-                name,
-                MethodAttributes.Public | MethodAttributes.Static,
-                typeof(Dictionary<string, object>), new Type[] { typeof(UnityBinaryReader) });
+                var members = node.Children;
 
-            GenDeserializerContext c = new GenDeserializerContext();
-            c.il = method.GetILGenerator();
-            c.nodes = nodes;
-            c.i = 0;
-            c.types = new List<string>(32);
+                for(int i = 0; i < members.Count; i++) {
+                    il.Emit(OpCodes.Dup);
+                    il.Emit(OpCodes.Ldstr, PrettifyName(members[i].Name));
 
-            GenReadObject(c);
-        }
+                    GenReadUnknownType(members[i], requireBoxing: true);
 
-        public static void SaveAssembly(string filename) {
-            _assembly.Save(filename);
-        }
-#endif
+                    il.Emit(OpCodes.Callvirt, DicStrObjAdd);
+                }
 
-        private static void GenReadObject(GenDeserializerContext c) {
-            c.types.Add(c.nodes[c.i].Type);
+                // asset = new DynamicAsset(Dic);
+                il.Emit(OpCodes.Newobj, DynamicAssetCtor);
 
-            int dic = c.AllocLocal(DicStrObjType);
+                PopType();
+            }
 
-            int mindepth = c.nodes[c.i].Level;
-
-            // Init Dictionary
-            c.il.Emit(OpCodes.Newobj, DicStrObjCtor);
-            c.il.Emit(OpCodes.Stloc_S, dic);
-
-            while (c.i < c.nodes.Length && c.nodes[c.i].Level >= mindepth) {
-                c.il.Emit(OpCodes.Ldloc_S, dic);
-                c.il.Emit(OpCodes.Ldstr, PrettifyName(c.nodes[c.i].Name));
-
+            private void GenReadUnknownType(NodeTree node, bool requireBoxing) {
                 // Try Known Type
-                if (TryGenKnownType(c)) { }
+                if (TryGenKnownType(node, requireBoxing)) { }
+                else if (node.Type == "TypelessData") {
+                    // Assert node.Children[0].Type == "int" && node.Children[0].Name == "size"
+                    // Assert node.Children[1].Type == "UInt8" && node.Children[1].Name == "data"
+                    var readfunc = ReadValueArray.MakeGenericMethod(typeof(byte));
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Call, readfunc);
+                }
                 // Map
-                else if (c.nodes[c.i].Type == "map") {
+                else if (node.Type == "map") {
+                    GenReadDic(node);
                 }
                 // Array
-                else if (c.i < c.nodes.Length - 1 && c.nodes[c.i + 1].Type == "Array") 
-                    GenReadArray(c);
+                else if (node.HasChildren && node.Children[0].Type == "Array") {
+                    GenReadArray(node.Children[0]);
+                }
+                else
+                    GenReadObject(node);
 
-                c.il.Emit(OpCodes.Callvirt, DicStrObjAdd);
+                if (node.IsAligned)
+                    GenAlign();
             }
 
-            c.ReleaseLocal(DicStrObjType);
-            c.types.RemoveAt(c.types.Count - 1);
-        }
+            private bool TryGenKnownType(NodeTree node, bool requireBoxing) {
+                // Try Primitive Type
+                Type type;
 
-        private static bool TryGenKnownType(GenDeserializerContext c) {
-            // Try Primitive Type
-            Type type;
-
-            if (PrimitiveTypeDic.TryGetValue(c.nodes[c.i].Type, out type)) {
-                // reader.Read<T>()
-                c.il.Emit(OpCodes.Ldarg_0);
-                c.il.Emit(OpCodes.Call, PrimitiveReaderDic[type]);
-                c.i++;
-                return true;
+                if (PrimitiveTypeDic.TryGetValue(node.Type, out type)) {
+                    // reader.Read<T>()
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Call, PrimitiveReaderDic[type]);
+                    if (requireBoxing)
+                        il.Emit(OpCodes.Box, type);
+                    return true;
+                }
+                // Try String
+                else if (node.Type == "string") {
+                    GenReadString();
+                    return true;
+                }
+                else
+                    return false;
             }
-            // Try String
-            else if(c.nodes[c.i].Type == "string") {
-                GenReadString(c);
-                return true;
+
+            private void GenReadString() {
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Call, ReadAlignedString);
             }
-            else
-                return false;
-        }
+            
+            private void GenReadArray(NodeTree node) {
+                NodeTree elem = node.Children[1];
 
-        private static void GenReadString(GenDeserializerContext c) {
-            c.il.Emit(OpCodes.Ldarg_0);
-            c.il.Emit(OpCodes.Dup);
-            c.il.Emit(OpCodes.Call, PrimitiveReaderDic[typeof(int)]);
-            c.il.Emit(OpCodes.Call, ReadString);
+                // Try Primitive Type
+                Type elemtype;
+                if (PrimitiveTypeDic.TryGetValue(elem.Type, out elemtype)) {
+                    // reader.ReadValueArray<T>()
+                    var readfunc = ReadValueArray.MakeGenericMethod(elemtype);
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Call, readfunc);
+                }
+                // Try String
+                else if (elem.Type == "string") {
+                    // var ary = new string[reader.ReadInt()];
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Call, ReadInt);
+                    il.Emit(OpCodes.Newarr, typeof(string));
 
-            // reader.Align(4);
-            c.il.Emit(OpCodes.Ldarg_0);
-            c.il.Emit(OpCodes.Ldc_I4_4);
-            c.il.Emit(OpCodes.Call, AlignReader);
+                    int i = AllocLocal(typeof(int));
+                    // for(int i = 0; i < ary.Length; i++)
+                    il.EmitFor(i,
+                        cond: (cil) => {
+                            il.Emit(OpCodes.Dup);
+                            il.Emit(OpCodes.Ldlen);
+                            il.Emit(OpCodes.Conv_I4);
+                            il.EmitLdloc(i);
+                            return OpCodes.Ble_S;
+                        },
+                        block: (cil) => {
+                            // ary[i] = r.ReadAlignedString();
+                            il.Emit(OpCodes.Dup);
+                            il.EmitLdloc(i);
+                            GenReadString();
+                            il.Emit(OpCodes.Stelem, typeof(string));
+                        }
+                    );
+                    ReleaseLocal(typeof(int));
+                }
+                else if (elem.Type == "map")
+                    throw new NotImplementedException("Array of map is not supported");
+                // Object
+                else {
+                    // vec = new DynamicAssetArray(reader.ReadInt(), protoname)
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Call, ReadInt);
 
-            c.i += 3;
-        }
+                    il.Emit(OpCodes.Ldstr, GetFQN(elem.Type));
 
-        private static void GenReadArray(GenDeserializerContext c) {
-            string name = c.nodes[c.i].Name;
-            c.i += 2;
-            // Try Primitive Type
-            Type elemtype;
-            if (PrimitiveTypeDic.TryGetValue(c.nodes[c.i].Type, out elemtype)) {
-                // reader.ReadValueArray<T>()
+                    il.Emit(OpCodes.Newobj, DynamicAssetArrayCtor);
 
-                var readfunc = ReadValueArray.MakeGenericMethod(elemtype);
-                c.il.Emit(OpCodes.Ldarg_0);
-                c.il.Emit(OpCodes.Call, readfunc);
+                    // ary = vec.elems;
+                    il.Emit(OpCodes.Dup);
+                    il.Emit(OpCodes.Ldfld, DynamicAssetArrayelems);
 
-                c.il.Emit(OpCodes.Callvirt, DicStrObjAdd);
+                    // for(int i = 0; i < ary.Length; i++) 
+                    int i = AllocLocal(typeof(int));
+                    il.EmitFor(i,
+                        (cil) => {
+                            il.Emit(OpCodes.Dup);
+                            il.Emit(OpCodes.Ldlen);
+                            il.Emit(OpCodes.Conv_I4);
+                            il.EmitLdloc(i);
+                            return OpCodes.Ble;
+                        },
+                        (cil) => {
+                            // ary[i] = new DynamicAsset(GenReadUnkownType()); 
+                            il.Emit(OpCodes.Dup);
+                            il.EmitLdloc(i);
+
+                            // Fallback
+                            GenReadUnknownType(elem, requireBoxing: false);
+
+                            il.Emit(OpCodes.Stelem, typeof(DynamicAsset));
+                        }
+                    );
+
+                    il.Emit(OpCodes.Pop);
+                }
+                if (node.IsAligned)
+                    GenAlign();
             }
-            // Try String
-            if (c.nodes[c.i].Type == "string") {
-                // var ary = new string[reader.ReadInt()];
-                c.il.Emit(OpCodes.Ldarg_0);
-                c.il.Emit(OpCodes.Call, ReadInt);
-                c.il.Emit(OpCodes.Newarr, typeof(string));
 
-                // for(int i = 0; i < ary.Length; i++) ReadString();
-                int i = c.AllocLocal(typeof(int));
-                c.il.Emit(OpCodes.Ldc_I4_0);
-                c.il.Emit(OpCodes.Stloc_S, i);
+            private void GenReadDic(NodeTree node) {
+                Type keytype, valuetype;
 
-                var l_loopstart = c.il.DefineLabel();
-                var l_loopend = c.il.DefineLabel();
+                NodeTree pair = node.Children[0].Children[1];
 
-                c.il.MarkLabel(l_loopstart);
+                // Determine Key/Value Type
+                if (PrimitiveTypeDic.TryGetValue(pair.Children[0].Type, out keytype)) { }
+                else if (pair.Children[0].Type == "string")
+                    keytype = typeof(string);
+                else
+                    keytype = typeof(object);
 
-                c.il.Emit(OpCodes.Dup);
-                c.il.Emit(OpCodes.Ldlen);
-                c.il.Emit(OpCodes.Conv_I4);
-                c.il.Emit(OpCodes.Ldloc_S, i);
-                c.il.Emit(OpCodes.Ble_S, l_loopend);
+                if (PrimitiveTypeDic.TryGetValue(pair.Children[1].Type, out valuetype)) { }
+                else if (pair.Children[1].Type == "string")
+                    valuetype = typeof(string);
+                else
+                    valuetype = typeof(object);
 
-                c.il.Emit(OpCodes.Dup);
-                c.il.Emit(OpCodes.Ldloc_S, i);
-                GenReadString(c);
-                c.il.Emit(OpCodes.Stelem, typeof(string));
+                // int cnt = reader.ReadInt();
+                int cnt = AllocLocal(typeof(int));
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Call, ReadInt);
+                il.EmitStloc(cnt);
 
-                c.il.Emit(OpCodes.Ldloc_S, i);
-                c.il.Emit(OpCodes.Ldc_I4_1);
-                c.il.Emit(OpCodes.Add);
-                c.il.Emit(OpCodes.Stloc_S, i);
-                c.il.Emit(OpCodes.Br_S, l_loopstart);
+                // Create Dictionary<keytype, valuetype>
+                Type dictype = typeof(Dictionary<,>).MakeGenericType(keytype, valuetype);
+                MethodInfo add = dictype.GetMethod("Add", new Type[] { keytype, valuetype });
+                il.EmitLdloc(cnt);
+                il.Emit(OpCodes.Newobj, dictype.GetConstructor(new Type[] { typeof(int) }));
 
-                c.il.MarkLabel(l_loopend);
+                // Read KeyValuePairs
 
-                c.ReleaseLocal(typeof(int));
+                // for(int i = 0; i < cnt; i++)
+                int i = AllocLocal(typeof(int));
+                il.EmitFor(i,
+                    (cil) => {
+                        il.EmitLdloc(i);
+                        il.EmitLdloc(cnt);
+                        return OpCodes.Bge;
+                    },
+                    (cil) => {
+                        // dic.Add(
+                        il.Emit(OpCodes.Dup);
+
+                        // Read Key
+                        GenReadUnknownType(pair.Children[0], requireBoxing: false);
+
+                        // Read Value
+                        GenReadUnknownType(pair.Children[1], requireBoxing: false);
+
+                        // Add KeyValuePair
+                        il.Emit(OpCodes.Callvirt, add);
+                    }
+                );
+                ReleaseLocal(typeof(int));
+                ReleaseLocal(typeof(int));
+
+                if (node.Children[0].IsAligned) {
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Ldc_I4_4);
+                    il.Emit(OpCodes.Call, AlignReader);
+                }
             }
-            // Array in Array
-            else if (c.i < c.nodes.Length - 1 && c.nodes[c.i + 1].Type == "Array")
-                throw new NotImplementedException("Array in Array is not supported.");
-            // Object
-            else {
-                // vec = DynamicAssetArray(reader.ReadInt(), protoname);
-                c.il.Emit(OpCodes.Ldarg_0);
-                c.il.Emit(OpCodes.Call, ReadInt);
 
-                c.il.Emit(OpCodes.Ldstr, c.types.Aggregate((a, b) => a + "." + b));
-
-                c.il.Emit(OpCodes.Newobj, DynamicAssetArrayCtor);
-
-                // while(vec.Add(ReadObject());
-                var l_loopstart = c.il.DefineLabel();
-                c.il.MarkLabel(l_loopstart);
-
-                c.il.Emit(OpCodes.Dup);
-                GenReadObject(c);
-                c.il.Emit(OpCodes.Ldloc_S, c.local_index + 1);
-
-                c.il.Emit(OpCodes.Call, DynamicAssetArrayAdd);
-
-                c.il.Emit(OpCodes.Brtrue, l_loopstart);
+            private void GenAlign() {
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldc_I4_4);
+                il.Emit(OpCodes.Call, AlignReader);
             }
-        }
-
-        private static void GenReadDic(GenDeserializerContext c) {
-            Type keytype, valuetype;
-
-            // First, scan tree and determine the key/value type
-            int scani = c.i + 2;
-            int mindepth = c.nodes[scani].Level;
-
-            // Scan KeyType
-            if (!PrimitiveTypeDic.TryGetValue(c.nodes[c.i].Type, out keytype)) {
-                keytype = typeof(object);
-                scani++;
-                while (scani < c.nodes.Length && c.nodes[scani].Level > mindepth)
-                    scani++;
-            }
-            else
-                scani++;
-
-            // Scan ValueType
-            if (!PrimitiveTypeDic.TryGetValue(c.nodes[c.i].Type, out valuetype)) {
-                valuetype = typeof(object);
-                scani++;
-                while (scani < c.nodes.Length && c.nodes[scani].Level >= mindepth)
-                    scani++;
-            }
-            else
-                scani++;
-
-            // Create Dictionary<keytype, valuetype>
-            Type dictype = typeof(Dictionary<,>).MakeGenericType(keytype, valuetype);
-            c.il.Emit(OpCodes.Newobj, dictype.GetConstructor(Type.EmptyTypes));
-
-            // Read KeyValuePairs
-
-            // 
         }
     }
 }
