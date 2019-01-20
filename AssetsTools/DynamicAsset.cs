@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 using System.Dynamic;
 
 namespace AssetsTools {
-    public partial class DynamicAsset : DynamicObject {
-
+    public partial class DynamicAsset : DynamicObject, IDynamicAssetBase {
         private Dictionary<string, object> objects;
+        private string proto_name;
+
+        public string TypeName => proto_name;
 
         public DynamicAsset() {
-            objects = new Dictionary<string, object>();
         }
 
 #if DEBUG
@@ -19,8 +20,9 @@ namespace AssetsTools {
 #else
         internal
 #endif
-            DynamicAsset(Dictionary<string, object> dic) {
+            DynamicAsset(Dictionary<string, object> dic, string proto_name) {
             objects = dic;
+            this.proto_name = proto_name;
         }
 
         public override bool TryGetMember(GetMemberBinder binder, out object result) {
@@ -28,10 +30,34 @@ namespace AssetsTools {
         }
 
         public override bool TrySetMember(SetMemberBinder binder, object value) {
-            if (!objects.ContainsKey(binder.Name) || objects[binder.Name].GetType() != value.GetType())
+            IDynamicAssetBase ival = value as IDynamicAssetBase;
+            object target = null;
+            if (!objects.TryGetValue(binder.Name, out target))
                 return false;
+            else if (target.GetType() != value.GetType())
+                throw new TypeMismatchException("The type of `" + binder.Name + "` is `" + target.GetType().GetCSharpName() + "` but got `" + value.GetType().GetCSharpName() + "`");
+            else if((ival != null && ival.TypeName != ((IDynamicAssetBase)target).TypeName))
+                throw new TypeMismatchException("The type of `" + binder.Name + "` is `" + ((IDynamicAssetBase)target).TypeName + "` but got `" + ival.TypeName + "`");
             objects[binder.Name] = value;
             return true;
+        }
+
+        public override int GetHashCode() {
+            int hash = proto_name.GetHashCode();
+            foreach (var kv in objects) {
+                hash ^= kv.Key.GetHashCode() ^ kv.Value.GetHashCode();
+            }
+            return hash;
+        }
+
+        public DynamicAsset GetPrototype() {
+            return PrototypeDic[proto_name];
+        }
+
+        public class TypeMismatchException : Exception {
+            public TypeMismatchException() { }
+
+            public TypeMismatchException(string message) : base(message) { }
         }
     }
 }

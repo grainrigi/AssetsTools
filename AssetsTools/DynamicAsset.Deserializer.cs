@@ -158,6 +158,10 @@ namespace AssetsTools {
             private string GetFQN(string name) {
                 return types.Aggregate((a, b) => a + "." + b) + "." + name;
             }
+
+            private string GetFQN() {
+                return types.Aggregate((a, b) => a + "." + b);
+            }
             #endregion
 
             public DeserializerBuilder(TypeTree.Node[] nodes) {
@@ -171,8 +175,13 @@ namespace AssetsTools {
                 il.Emit(OpCodes.Ret);
             }
 
-            private void GenReadObject(NodeTree node) {
+            private object GenReadObject(NodeTree node) {
                 PushType(node.Type);
+
+                // Init Prototype
+                string FQN = GetFQN();
+                Dictionary<string, object> protodic = new Dictionary<string, object>();
+
 
                 // Init Dictionary
                 il.Emit(OpCodes.Ldc_I4, (int)node.Children.Count);
@@ -181,46 +190,58 @@ namespace AssetsTools {
                 var members = node.Children;
 
                 for(int i = 0; i < members.Count; i++) {
+                    string membername = PrettifyName(members[i].Name);
                     il.Emit(OpCodes.Dup);
-                    il.Emit(OpCodes.Ldstr, PrettifyName(members[i].Name));
+                    il.Emit(OpCodes.Ldstr, PrettifyName(membername));
 
-                    GenReadUnknownType(members[i], requireBoxing: true);
+                    protodic.Add(membername, GenReadUnknownType(members[i], requireBoxing: true));
 
                     il.Emit(OpCodes.Callvirt, DicStrObjAdd);
                 }
 
-                // asset = new DynamicAsset(Dic);
+                // asset = new DynamicAsset(Dic, protoname);
+                il.Emit(OpCodes.Ldstr, FQN);
                 il.Emit(OpCodes.Newobj, DynamicAssetCtor);
 
                 PopType();
+
+                // Generate Prototype
+                var proto = new DynamicAsset(protodic, FQN);
+                PrototypeDic[FQN] = proto;
+                return proto;
             }
 
-            private void GenReadUnknownType(NodeTree node, bool requireBoxing) {
+            private object GenReadUnknownType(NodeTree node, bool requireBoxing) {
+                object proto;
                 // Try Known Type
-                if (TryGenKnownType(node, requireBoxing)) { }
+                if (TryGenKnownType(node, requireBoxing, out proto)) { }
                 else if (node.Type == "TypelessData") {
                     // Assert node.Children[0].Type == "int" && node.Children[0].Name == "size"
                     // Assert node.Children[1].Type == "UInt8" && node.Children[1].Name == "data"
                     var readfunc = ReadValueArray.MakeGenericMethod(typeof(byte));
                     il.Emit(OpCodes.Ldarg_0);
                     il.Emit(OpCodes.Call, readfunc);
+
+                    proto = new byte[0];
                 }
                 // Map
                 else if (node.Type == "map") {
-                    GenReadDic(node);
+                    proto = GenReadDic(node);
                 }
                 // Array
                 else if (node.HasChildren && node.Children[0].Type == "Array") {
-                    GenReadArray(node.Children[0]);
+                    proto = GenReadArray(node.Children[0]);
                 }
                 else
-                    GenReadObject(node);
+                    proto = GenReadObject(node);
 
                 if (node.IsAligned)
                     GenAlign();
+
+                return proto;
             }
 
-            private bool TryGenKnownType(NodeTree node, bool requireBoxing) {
+            private bool TryGenKnownType(NodeTree node, bool requireBoxing, out object prototype) {
                 // Try Primitive Type
                 Type type;
 
@@ -230,15 +251,23 @@ namespace AssetsTools {
                     il.Emit(OpCodes.Call, PrimitiveReaderDic[type]);
                     if (requireBoxing)
                         il.Emit(OpCodes.Box, type);
+
+                    prototype = Activator.CreateInstance(type);
+
                     return true;
                 }
                 // Try String
                 else if (node.Type == "string") {
                     GenReadString();
+
+                    prototype = "";
+
                     return true;
                 }
-                else
+                else {
+                    prototype = null;
                     return false;
+                }
             }
 
             private void GenReadString() {
@@ -246,8 +275,9 @@ namespace AssetsTools {
                 il.Emit(OpCodes.Call, ReadAlignedString);
             }
             
-            private void GenReadArray(NodeTree node) {
+            private object GenReadArray(NodeTree node) {
                 NodeTree elem = node.Children[1];
+                object proto;
 
                 // Try Primitive Type
                 Type elemtype;
@@ -256,6 +286,8 @@ namespace AssetsTools {
                     var readfunc = ReadValueArray.MakeGenericMethod(elemtype);
                     il.Emit(OpCodes.Ldarg_0);
                     il.Emit(OpCodes.Call, readfunc);
+
+                    proto = Activator.CreateInstance(elemtype.MakeArrayType(), new object[] { 0 });
                 }
                 // Try String
                 else if (elem.Type == "string") {
@@ -283,16 +315,20 @@ namespace AssetsTools {
                         }
                     );
                     ReleaseLocal(typeof(int));
+
+                    proto = new string[0];
                 }
                 else if (elem.Type == "map")
                     throw new NotImplementedException("Array of map is not supported");
                 // Object
                 else {
+                    string FQN = GetFQN(elem.Type);
+
                     // vec = new DynamicAssetArray(reader.ReadInt(), protoname)
                     il.Emit(OpCodes.Ldarg_0);
                     il.Emit(OpCodes.Call, ReadInt);
 
-                    il.Emit(OpCodes.Ldstr, GetFQN(elem.Type));
+                    il.Emit(OpCodes.Ldstr, FQN);
 
                     il.Emit(OpCodes.Newobj, DynamicAssetArrayCtor);
 
@@ -318,17 +354,21 @@ namespace AssetsTools {
                             // Fallback
                             GenReadUnknownType(elem, requireBoxing: false);
 
-                            il.Emit(OpCodes.Stelem, typeof(DynamicAsset));
+                            il.Emit(OpCodes.Stelem_Ref);
                         }
                     );
 
                     il.Emit(OpCodes.Pop);
+
+                    proto = new DynamicAssetArray(0, FQN);
                 }
                 if (node.IsAligned)
                     GenAlign();
+
+                return proto;
             }
 
-            private void GenReadDic(NodeTree node) {
+            private object GenReadDic(NodeTree node) {
                 Type keytype, valuetype;
 
                 NodeTree pair = node.Children[0].Children[1];
@@ -346,6 +386,9 @@ namespace AssetsTools {
                 else
                     valuetype = typeof(object);
 
+                string keyFQN = (keytype == typeof(object)) ? GetFQN(pair.Children[0].Type) : keytype.Name;
+                string valueFQN = (valuetype == typeof(object)) ? GetFQN(pair.Children[1].Type) : valuetype.Name;
+
                 // int cnt = reader.ReadInt();
                 int cnt = AllocLocal(typeof(int));
                 il.Emit(OpCodes.Ldarg_0);
@@ -353,10 +396,12 @@ namespace AssetsTools {
                 il.EmitStloc(cnt);
 
                 // Create Dictionary<keytype, valuetype>
-                Type dictype = typeof(Dictionary<,>).MakeGenericType(keytype, valuetype);
+                Type dictype = typeof(DynamicAssetDictionary<,>).MakeGenericType(keytype, valuetype);
                 MethodInfo add = dictype.GetMethod("Add", new Type[] { keytype, valuetype });
                 il.EmitLdloc(cnt);
-                il.Emit(OpCodes.Newobj, dictype.GetConstructor(new Type[] { typeof(int) }));
+                il.Emit(OpCodes.Ldstr, keyFQN);
+                il.Emit(OpCodes.Ldstr, valueFQN);
+                il.Emit(OpCodes.Newobj, dictype.GetConstructor(new Type[] { typeof(int), typeof(string), typeof(string) }));
 
                 // Read KeyValuePairs
 
@@ -390,6 +435,9 @@ namespace AssetsTools {
                     il.Emit(OpCodes.Ldc_I4_4);
                     il.Emit(OpCodes.Call, AlignReader);
                 }
+
+                // Make prototype
+                return Activator.CreateInstance(dictype, new object[] { 0, keyFQN, valueFQN });
             }
 
             private void GenAlign() {

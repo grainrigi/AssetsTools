@@ -18,7 +18,7 @@ namespace AssetsTools {
 #else
             BindingFlags.NonPublic
 #endif
-            | BindingFlags.Instance, null, new Type[] { typeof(Dictionary<string, object>) }, null);
+            | BindingFlags.Instance, null, new Type[] { typeof(Dictionary<string, object>), typeof(string) }, null);
 
         private static ConstructorInfo DynamicAssetArrayCtor = typeof(DynamicAssetArray).GetConstructor(BindingFlags.InvokeMethod |
 #if DEBUG
