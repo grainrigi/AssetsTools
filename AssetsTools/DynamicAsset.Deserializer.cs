@@ -60,69 +60,9 @@ namespace AssetsTools {
             ILGenerator il;
             NodeTree root;
 
+            LocalManager locman;
+            ProtoNameManager protoman;
 
-            #region LocalManager
-            Dictionary<Type, List<int>> local_table = new Dictionary<Type, List<int>>();
-            byte local_count;
-            int ret_local = -1;
-
-            private int AllocLocal(Type type) {
-                List<int> list;
-                if(!local_table.TryGetValue(type, out list)) {
-                    list = new List<int>(16);
-                    local_table[type] = list;
-                    list.Add(0);
-                }
-
-                int usedCount = list[0];
-                if(usedCount < list.Count - 1) {
-                    list[0] = usedCount + 1;
-                    return list[usedCount];
-                }
-                else {
-                    if (local_count == 255)
-                        throw new IndexOutOfRangeException("No more locals can be allocated");
-                    il.DeclareLocal(type);
-                    list.Add(local_count);
-                    list[0] = usedCount + 1;
-                    return local_count++;
-                }
-            }
-
-            public void ReleaseLocal(Type type) {
-                local_table[type][0]--;
-            }
-
-            public void ReturnLocal(Type type) {
-                List<int> list = local_table[type];
-                ret_local = list[list[0]];
-                list[0]--;
-            }
-
-            public int GetRetLocal() {
-                return ret_local;
-            }
-            #endregion
-
-            #region ProtoNameManager
-            List<string> types = new List<string>(32);
-
-            private void PushType(string name) {
-                types.Add(name);
-            }
-
-            private void PopType() {
-                types.RemoveAt(types.Count - 1);
-            }
-
-            private string GetFQN(string name) {
-                return types.Aggregate((a, b) => a + "." + b) + "." + name;
-            }
-
-            private string GetFQN() {
-                return types.Aggregate((a, b) => a + "." + b);
-            }
-            #endregion
 
             public DeserializerBuilder(TypeTree.Node[] nodes) {
                 this.il = null;
@@ -131,15 +71,17 @@ namespace AssetsTools {
 
             public void Build(ILGenerator il) {
                 this.il = il;
+                this.locman = new LocalManager(il);
+                this.protoman = new ProtoNameManager();
                 GenReadObject(root);
                 il.Emit(OpCodes.Ret);
             }
 
             private object GenReadObject(NodeTree node) {
-                PushType(node.Type);
+                protoman.PushType(node.Type);
 
                 // Init Prototype
-                string FQN = GetFQN();
+                string FQN = protoman.GetFQN();
                 Dictionary<string, object> protodic = new Dictionary<string, object>();
 
 
@@ -163,7 +105,7 @@ namespace AssetsTools {
                 il.Emit(OpCodes.Ldstr, FQN);
                 il.Emit(OpCodes.Newobj, DynamicAssetCtor);
 
-                PopType();
+                protoman.PopType();
 
                 // Generate Prototype
                 var proto = new DynamicAsset(protodic, FQN);
@@ -256,7 +198,7 @@ namespace AssetsTools {
                     il.Emit(OpCodes.Call, ReadInt);
                     il.Emit(OpCodes.Newarr, typeof(string));
 
-                    int i = AllocLocal(typeof(int));
+                    int i = locman.AllocLocal(typeof(int));
                     // for(int i = 0; i < ary.Length; i++)
                     il.EmitFor(i,
                         cond: (cil) => {
@@ -274,7 +216,7 @@ namespace AssetsTools {
                             il.Emit(OpCodes.Stelem, typeof(string));
                         }
                     );
-                    ReleaseLocal(typeof(int));
+                    locman.ReleaseLocal(typeof(int));
 
                     proto = new string[0];
                 }
@@ -282,7 +224,7 @@ namespace AssetsTools {
                     throw new NotImplementedException("Array of map is not supported");
                 // Object
                 else {
-                    string FQN = GetFQN(elem.Type);
+                    string FQN = protoman.GetFQN(elem.Type);
 
                     // vec = new DynamicAssetArray(reader.ReadInt(), protoname)
                     il.Emit(OpCodes.Ldarg_0);
@@ -297,7 +239,7 @@ namespace AssetsTools {
                     il.Emit(OpCodes.Ldfld, DynamicAssetArrayelems);
 
                     // for(int i = 0; i < ary.Length; i++) 
-                    int i = AllocLocal(typeof(int));
+                    int i = locman.AllocLocal(typeof(int));
                     il.EmitFor(i,
                         (cil) => {
                             il.Emit(OpCodes.Dup);
@@ -346,11 +288,11 @@ namespace AssetsTools {
                 else
                     valuetype = typeof(object);
 
-                string keyFQN = (keytype == typeof(object)) ? GetFQN(pair.Children[0].Type) : keytype.GetCSharpName();
-                string valueFQN = (valuetype == typeof(object)) ? GetFQN(pair.Children[1].Type) : valuetype.GetCSharpName();
+                string keyFQN = (keytype == typeof(object)) ? protoman.GetFQN(pair.Children[0].Type) : keytype.GetCSharpName();
+                string valueFQN = (valuetype == typeof(object)) ? protoman.GetFQN(pair.Children[1].Type) : valuetype.GetCSharpName();
 
                 // int cnt = reader.ReadInt();
-                int cnt = AllocLocal(typeof(int));
+                int cnt = locman.AllocLocal(typeof(int));
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Call, ReadInt);
                 il.EmitStloc(cnt);
@@ -366,7 +308,7 @@ namespace AssetsTools {
                 // Read KeyValuePairs
 
                 // for(int i = 0; i < cnt; i++)
-                int i = AllocLocal(typeof(int));
+                int i = locman.AllocLocal(typeof(int));
                 il.EmitFor(i,
                     (cil) => {
                         il.EmitLdloc(i);
@@ -387,8 +329,8 @@ namespace AssetsTools {
                         il.Emit(OpCodes.Callvirt, add);
                     }
                 );
-                ReleaseLocal(typeof(int));
-                ReleaseLocal(typeof(int));
+                locman.ReleaseLocal(typeof(int));
+                locman.ReleaseLocal(typeof(int));
 
                 if (node.Children[0].IsAligned) {
                     il.Emit(OpCodes.Ldarg_0);

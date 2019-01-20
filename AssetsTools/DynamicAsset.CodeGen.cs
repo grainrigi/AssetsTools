@@ -124,5 +124,72 @@ namespace AssetsTools {
                 return ret;
             }
         }
+
+        private class LocalManager {
+            ILGenerator il;
+
+            Dictionary<Type, List<int>> local_table = new Dictionary<Type, List<int>>();
+            byte local_count;
+            int ret_local = -1;
+
+            public LocalManager(ILGenerator il) {
+                this.il = il;
+            }
+
+            public int AllocLocal(Type type) {
+                List<int> list;
+                if(!local_table.TryGetValue(type, out list)) {
+                    list = new List<int>(16);
+                    local_table[type] = list;
+                    list.Add(0);
+                }
+
+                int usedCount = list[0];
+                if(usedCount < list.Count - 1) {
+                    list[0] = usedCount + 1;
+                    return list[usedCount];
+                }
+                else {
+                    il.DeclareLocal(type);
+                    list.Add(local_count);
+                    list[0] = usedCount + 1;
+                    return local_count++;
+                }
+            }
+
+            public void ReleaseLocal(Type type) {
+                local_table[type][0]--;
+            }
+
+            public void ReturnLocal(Type type) {
+                List<int> list = local_table[type];
+                ret_local = list[list[0]];
+                list[0]--;
+            }
+
+            public int GetRetLocal() {
+                return ret_local;
+            }
+        }
+
+        private class ProtoNameManager {
+            List<string> types = new List<string>(32);
+
+            public void PushType(string name) {
+                types.Add(name);
+            }
+
+            public void PopType() {
+                types.RemoveAt(types.Count - 1);
+            }
+
+            public string GetFQN(string name) {
+                return types.Aggregate((a, b) => a + "." + b) + "." + name;
+            }
+
+            public string GetFQN() {
+                return types.Aggregate((a, b) => a + "." + b);
+            }
+        }
     }
 }
