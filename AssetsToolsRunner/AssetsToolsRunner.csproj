@@ -34,9 +34,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AssetsTools">
-      <HintPath>..\library\AssetsTools.dll</HintPath>
-    </Reference>
     <Reference Include="IOLib">
       <HintPath>..\library\IOLib.dll</HintPath>
     </Reference>
@@ -55,6 +52,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AssetsTools\AssetsTools.csproj">
+      <Project>{44c5f581-ee28-408b-b5dc-aac904644436}</Project>
+      <Name>AssetsTools</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

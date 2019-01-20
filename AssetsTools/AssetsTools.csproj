@@ -38,10 +38,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\library\IOLib.dll</HintPath>
     </Reference>
-    <Reference Include="Lz4Codec, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\library\Lz4Codec.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
@@ -86,8 +82,15 @@
     <Compile Include="AssetBundleFile.Header.cs" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Lz4Codec\Lz4Codec.csproj">
+      <Project>{ebe17353-6bdb-4998-9101-cd6c6c945505}</Project>
+      <Name>Lz4Codec</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy /Y /D $(TargetDir)$(TargetFileName) $(SolutionDir)library\$(TargetFileName)</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>
