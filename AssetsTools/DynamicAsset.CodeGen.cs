@@ -82,5 +82,47 @@ namespace AssetsTools {
         private static string PrettifyName(string name) {
             return name.Replace(' ', '_').Replace("[", "").Replace("]","");
         }
+
+
+        private struct NodeTree {
+            public string Name;
+            public string Type;
+            public bool IsAligned;
+
+            public List<NodeTree> Children;
+
+            public bool HasChildren => Children != null;
+
+            public static NodeTree FromNodes(TypeTree.Node[] nodes) {
+                int i = 0;
+                return readNodes(nodes, ref i);
+            }
+
+            private static NodeTree readNodes(TypeTree.Node[] nodes, ref int i) {
+                NodeTree ret;
+                ret.Name = nodes[i].Name;
+                ret.Type = nodes[i].Type;
+                ret.IsAligned = (nodes[i].MetaFlag & 0x4000) != 0;
+                ret.Children = null;
+
+                if (i < nodes.Length - 1) { // May have children
+                    if (nodes[i].Level < nodes[i + 1].Level) { // Has children
+                        var list = ret.Children = new List<NodeTree>();
+                        i++;
+                        var mindepth = nodes[i].Level;
+
+                        while (i < nodes.Length && nodes[i].Level >= mindepth) {
+                            list.Add(readNodes(nodes, ref i));
+                        }
+                    }
+                    else // Leaf node
+                        i++;
+                }
+                else // Leaf node
+                    i++;
+
+                return ret;
+            }
+        }
     }
 }
