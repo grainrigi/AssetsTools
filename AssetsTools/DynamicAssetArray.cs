@@ -33,7 +33,7 @@ namespace AssetsTools {
             }
             set {
                 if (value.TypeName != proto_name)
-                    throw new ArrayTypeMismatchException();
+                    throw new ArrayTypeMismatchException("The element type is `" + proto_name + "` but got `" + value.TypeName + "`");
                 elems[index] = value;
             }
         }
