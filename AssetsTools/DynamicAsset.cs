@@ -32,12 +32,18 @@ namespace AssetsTools {
         public override bool TrySetMember(SetMemberBinder binder, object value) {
             IDynamicAssetBase ival = value as IDynamicAssetBase;
             object target = null;
+
+            // If member exists
             if (!objects.TryGetValue(binder.Name, out target))
                 return false;
+            // If primitive type matches
             else if (target.GetType() != value.GetType())
                 throw new TypeMismatchException("The type of `" + binder.Name + "` is `" + target.GetType().GetCSharpName() + "` but got `" + value.GetType().GetCSharpName() + "`");
+            // If object type matches
             else if((ival != null && ival.TypeName != ((IDynamicAssetBase)target).TypeName))
                 throw new TypeMismatchException("The type of `" + binder.Name + "` is `" + ((IDynamicAssetBase)target).TypeName + "` but got `" + ival.TypeName + "`");
+
+            // Passed all checkes, now update the value
             objects[binder.Name] = value;
             return true;
         }
