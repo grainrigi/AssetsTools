@@ -23,5 +23,10 @@ namespace AssetsTools {
             reader.Align(4);
             return str;
         }
+
+        public static void WriteAlignedString(this UnityBinaryWriter writer, string str) {
+            writer.WriteString(str);
+            writer.Align(4);
+        }
     }
 }

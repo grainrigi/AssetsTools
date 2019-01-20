@@ -58,6 +58,7 @@ namespace IOLibGen {
                 }, WriteBytesEmitter);
             WriteBytes = helper.CreateMethod("WriteBytes", typeof(void),
                 new[] { (typeof(byte[]), "src") }, WriteBytes_1ArgEmitter);
+            helper.CreateMethod("WriteString", typeof(void), new[] { (typeof(string), "value") }, WriteStringEmitter);
             helper.CreateMethod("WriteStringToNull", typeof(void), new[] { (typeof(string), "value") }, WriteStringToNullEmitter);
             helper.CreateGenericMethodWithArrayParam("WriteValueArray", WriteArrayEmitter);
             WriteLZ4Data = helper.CreateMethod("WriteLZ4Data", typeof(int),
@@ -547,6 +548,112 @@ namespace IOLibGen {
 
             il.Emit(OpCodes.Call, WriteBytes);
 
+            il.Emit(OpCodes.Ret);
+        }
+
+        private static void WriteStringEmitter(ILGenerator il) {
+            il.DeclareLocal(typeof(int)).SetLocalSymInfo("noffset");
+            il.DeclareLocal(typeof(int)).SetLocalSymInfo("offset");
+            il.DeclareLocal(typeof(int)).SetLocalSymInfo("written");
+
+            // if(value?.Length == 0) WriteInt(0) && return;
+            var l_cont = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Brtrue_S, l_cont);
+            il.Emit(OpCodes.Pop);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Call, WriteInt);
+            il.Emit(OpCodes.Ret);
+
+            il.MarkLabel(l_cont);
+
+            l_cont = il.DefineLabel();
+
+            il.Emit(OpCodes.Call, typeof(string).GetProperty("Length").GetMethod);
+            il.Emit(OpCodes.Brtrue_S, l_cont);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Call, WriteInt);
+            il.Emit(OpCodes.Ret);
+
+            il.MarkLabel(l_cont);
+
+            // noffset = offset + GetMaxByteCount(value.Length);
+            il.Emit(OpCodes.Call, typeof(Encoding).GetProperty("UTF8").GetMethod);
+
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Call, typeof(string).GetProperty("Length").GetMethod);
+
+            il.Emit(OpCodes.Callvirt,
+                typeof(Encoding).GetMethod("GetMaxByteCount",
+                    new Type[] { typeof(int) }));
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Ldc_I4_4);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Stloc_1);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Stloc_0);
+
+            // if(noffset > capacity) EnsureCapacity(noffset);
+            l_cont = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, capacity);
+            il.Emit(OpCodes.Ble, l_cont);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, EnsureCapacity);
+
+            il.MarkLabel(l_cont);
+
+            // offset += UTF8.GetBytes(value, 0, value.Length, file, offset);
+            il.Emit(OpCodes.Call, typeof(Encoding).GetProperty("UTF8").GetMethod);
+
+            il.Emit(OpCodes.Ldarg_1);
+
+            il.Emit(OpCodes.Ldc_I4_0);
+
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Call, typeof(string).GetProperty("Length").GetMethod);
+            il.Emit(OpCodes.Conv_I4);
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, file);
+
+            il.Emit(OpCodes.Ldloc_1);
+
+            il.Emit(OpCodes.Callvirt,
+                typeof(Encoding).GetMethod("GetBytes",
+                    new Type[] { typeof(string), typeof(int), typeof(int), typeof(byte[]), typeof(int) }));
+
+            il.Emit(OpCodes.Stloc_2);
+
+            // WriteInt(written)
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, file);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Ldelema, typeof(byte));
+            il.Emit(OpCodes.Conv_U);
+            il.Emit(OpCodes.Ldloc_2);
+            il.Emit(OpCodes.Stind_I4);
+
+            // this.offset = offset + written;
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldloc_1);
+            il.Emit(OpCodes.Ldloc_2);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Stfld, offset);
+
+            UpdateBoundEmitter(il);
             il.Emit(OpCodes.Ret);
         }
 

@@ -299,6 +299,20 @@ namespace IOLibTest {
         }
 
         [TestMethod]
+        public void WriteString() {
+            UnityBinaryWriter w = new UnityBinaryWriter();
+
+            w.WriteString(TestString);
+            byte[] res = w.ToBytes();
+            for(int i = 0; i < TestStringBytes.Length; i++) {
+                if (res[i + 4] != TestStringBytes[i])
+                    Assert.AreEqual(TestStringBytes[i], res[i+4]);
+            }
+            Assert.AreEqual<byte>((byte)TestStringBytes.Length, res[0]);
+            Assert.AreEqual<long>(TestStringBytes.LongLength + 4, res.LongLength);
+        }
+
+        [TestMethod]
         public void WriteStringToNull() {
             UnityBinaryWriter w = new UnityBinaryWriter();
 
