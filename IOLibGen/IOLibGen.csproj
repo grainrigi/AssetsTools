@@ -67,6 +67,6 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>$(TargetDir)$(TargetFileName)
-xcopy /Y /D $(TargetDir)IOLib.dll $(SolutionDir)library\IOLib.dll</PostBuildEvent>
+echo F | xcopy /Y /D $(TargetDir)IOLib.dll $(SolutionDir)library\IOLib.dll</PostBuildEvent>
   </PropertyGroup>
 </Project>
