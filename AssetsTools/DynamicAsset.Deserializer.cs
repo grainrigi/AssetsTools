@@ -94,7 +94,7 @@ namespace AssetsTools {
                 for(int i = 0; i < members.Count; i++) {
                     string membername = PrettifyName(members[i].Name);
                     il.Emit(OpCodes.Dup);
-                    il.Emit(OpCodes.Ldstr, PrettifyName(membername));
+                    il.Emit(OpCodes.Ldstr, membername);
 
                     protodic.Add(membername, GenReadUnknownType(members[i], requireBoxing: true));
 
