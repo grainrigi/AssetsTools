@@ -386,8 +386,8 @@ namespace AssetsTools {
                 else
                     valuetype = typeof(object);
 
-                string keyFQN = (keytype == typeof(object)) ? GetFQN(pair.Children[0].Type) : keytype.Name;
-                string valueFQN = (valuetype == typeof(object)) ? GetFQN(pair.Children[1].Type) : valuetype.Name;
+                string keyFQN = (keytype == typeof(object)) ? GetFQN(pair.Children[0].Type) : keytype.GetCSharpName();
+                string valueFQN = (valuetype == typeof(object)) ? GetFQN(pair.Children[1].Type) : valuetype.GetCSharpName();
 
                 // int cnt = reader.ReadInt();
                 int cnt = AllocLocal(typeof(int));
