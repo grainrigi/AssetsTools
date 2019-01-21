@@ -55,6 +55,36 @@ namespace AssetsTools {
             Type _des = _type.CreateType();
             _assembly.Save(filename);
         }
+
+
+        private static int gendeserializerwithcount = 0;
+        public static Func<UnityBinaryReader, DynamicAsset> GenDeserializerWithAssembly(SerializedType sertype) {
+            string name = "";
+            var nodes = sertype.TypeTree.Nodes;
+            if (sertype.ClassID == (int)ClassIDType.MonoBehaviour)
+                name = "MonoBehaviour" + BitConverter.ToString(sertype.ScriptID) + "Deserializer" + gendeserializerwithcount.ToString();
+            else
+                name = nodes[0].Type + "Deserializer" + gendeserializerwithcount.ToString();
+            gendeserializerwithcount++;
+            AssemblyName assemblyname = new AssemblyName { Name = name };
+            AssemblyBuilder assembly = AppDomain.CurrentDomain.DefineDynamicAssembly(assemblyname, AssemblyBuilderAccess.RunAndSave);
+            ModuleBuilder module = assembly.DefineDynamicModule(name, name + ".dll", true);
+
+            TypeBuilder type = module.DefineType(name, TypeAttributes.Public);
+
+            MethodBuilder method = type.DefineMethod(
+                "Deserialize",
+                MethodAttributes.Public | MethodAttributes.Static,
+                typeof(DynamicAsset), new Type[] { typeof(UnityBinaryReader) });
+
+            DeserializerBuilder builder = new DeserializerBuilder(nodes);
+            builder.Build(method.GetILGenerator());
+
+            Type completed = type.CreateType();
+
+            return (Func<UnityBinaryReader, DynamicAsset>)Delegate.CreateDelegate(typeof(Func<UnityBinaryReader, DynamicAsset>), completed.GetMethod("Deserialize"));
+        }
+
 #endif
         private class DeserializerBuilder {
             ILGenerator il;
