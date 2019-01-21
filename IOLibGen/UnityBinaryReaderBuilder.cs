@@ -261,9 +261,6 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ldarg_3);
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Blt_S, l_except);
-            il.Emit(OpCodes.Ldarg_3);
-            il.Emit(OpCodes.Ldarg_2);
-            il.Emit(OpCodes.Blt_S, l_except);
             il.Emit(OpCodes.Br_S, l_cont);
 
             il.MarkLabel(l_except);
