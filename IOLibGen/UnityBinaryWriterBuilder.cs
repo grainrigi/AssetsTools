@@ -793,6 +793,11 @@ namespace IOLibGen {
 
             il.MarkLabel(l_cont);
 
+            // Load offset
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Stloc_3);
+
             // Calc copy size
             // testary = new T[2];
             // copysize = (&testary[1] - &testary[0]) * value.Length;
@@ -842,8 +847,15 @@ namespace IOLibGen {
             il.Emit(OpCodes.Conv_I8);
             il.Emit(OpCodes.Ble_S, l_cont);
 
-            il.Emit(OpCodes.Newobj, typeof(IndexOutOfRangeException).GetConstructor(Type.EmptyTypes));
-            il.Emit(OpCodes.Throw);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldloc_1);
+            il.Emit(OpCodes.Conv_I4);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, offset);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Ldc_I4_4);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Call, EnsureCapacity);
 
             il.MarkLabel(l_cont);
 
