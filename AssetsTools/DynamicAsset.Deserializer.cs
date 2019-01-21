@@ -333,7 +333,13 @@ namespace AssetsTools {
                 il.EmitLdloc(cnt);
                 il.Emit(OpCodes.Ldstr, keyFQN);
                 il.Emit(OpCodes.Ldstr, valueFQN);
-                il.Emit(OpCodes.Newobj, dictype.GetConstructor(new Type[] { typeof(int), typeof(string), typeof(string) }));
+                il.Emit(OpCodes.Newobj, dictype.GetConstructor(BindingFlags.InvokeMethod | BindingFlags.Instance |
+#if DEBUG
+                    BindingFlags.Public
+#else
+                    BindingFlags.NonPublic
+#endif
+                    , null, new Type[] { typeof(int), typeof(string), typeof(string) }, null));
 
                 // Read KeyValuePairs
 
@@ -369,7 +375,13 @@ namespace AssetsTools {
                 }
 
                 // Make prototype
-                return Activator.CreateInstance(dictype, new object[] { 0, keyFQN, valueFQN });
+                return Activator.CreateInstance(dictype, BindingFlags.Instance |
+#if DEBUG
+                    BindingFlags.Public
+#else
+                    BindingFlags.NonPublic
+#endif
+                    , null, new object[] { 0, keyFQN, valueFQN }, null);
             }
 
             private void GenAlign() {
