@@ -129,7 +129,7 @@ namespace AssetsTools {
             ILGenerator il;
 
             Dictionary<Type, List<int>> local_table = new Dictionary<Type, List<int>>();
-            byte local_count;
+            int local_count = 0;
             int ret_local = -1;
 
             public LocalManager(ILGenerator il) {
@@ -147,7 +147,7 @@ namespace AssetsTools {
                 int usedCount = list[0];
                 if(usedCount < list.Count - 1) {
                     list[0] = usedCount + 1;
-                    return list[usedCount];
+                    return list[usedCount + 1];
                 }
                 else {
                     il.DeclareLocal(type);
