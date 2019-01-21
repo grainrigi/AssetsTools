@@ -54,6 +54,13 @@ namespace AssetsTools {
                 il.Emit(OpCodes.Stloc, i);
         }
 
+        public static void EmitLdloca(this ILGenerator il, int i) {
+            if (i <= 255)
+                il.Emit(OpCodes.Ldloca_S, (byte)i);
+            else
+                il.Emit(OpCodes.Ldloca, i);
+        }
+
         /// <summary>
         /// Emit for loop
         /// </summary>
