@@ -18,29 +18,29 @@ namespace AssetsTools {
         }
 
 #if DEBUG
-        private static AssemblyName _name;
-        private static AssemblyBuilder _assembly = null;
-        private static ModuleBuilder _module;
-        public static TypeBuilder _type;
+        private static AssemblyName _desname;
+        private static AssemblyBuilder _desassembly = null;
+        private static ModuleBuilder _desmodule;
+        public static TypeBuilder _destype;
 
-        private static void InitAssembly() {
+        private static void InitDesAssembly() {
             string name = "Deserializer";
 
-            _name = new AssemblyName { Name = name };
-            _assembly = AppDomain.CurrentDomain.DefineDynamicAssembly(_name, AssemblyBuilderAccess.RunAndSave);
-            _module = _assembly.DefineDynamicModule(name, name + ".dll", true);
+            _desname = new AssemblyName { Name = name };
+            _desassembly = AppDomain.CurrentDomain.DefineDynamicAssembly(_desname, AssemblyBuilderAccess.RunAndSave);
+            _desmodule = _desassembly.DefineDynamicModule(name, name + ".dll", true);
 
-            
-            _type = _module.DefineType(name, System.Reflection.TypeAttributes.Public);
+
+            _destype = _desmodule.DefineType(name, System.Reflection.TypeAttributes.Public);
         }
 
         public static MethodBuilder GenDeserializerAssembly(TypeTree.Node[] nodes) {
-            if (_assembly == null)
-                InitAssembly();
+            if (_desassembly == null)
+                InitDesAssembly();
 
             string name = nodes[0].Type;
 
-            MethodBuilder method = _type.DefineMethod(
+            MethodBuilder method = _destype.DefineMethod(
                 name,
                 MethodAttributes.Public | MethodAttributes.Static,
                 typeof(DynamicAsset), new Type[] { typeof(UnityBinaryReader) });
@@ -51,9 +51,9 @@ namespace AssetsTools {
             return method;
         }
 
-        public static void SaveAssembly(string filename) {
-            Type _des = _type.CreateType();
-            _assembly.Save(filename);
+        public static void SaveDesAssembly(string filename) {
+            Type _des = _destype.CreateType();
+            _desassembly.Save(filename);
         }
 
 

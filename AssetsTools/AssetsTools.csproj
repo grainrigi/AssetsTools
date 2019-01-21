@@ -65,6 +65,7 @@
     <Compile Include="DynamicAsset.Deserializer.cs" />
     <Compile Include="DynamicAsset.CodeGen.cs" />
     <Compile Include="DynamicAsset.cs" />
+    <Compile Include="DynamicAsset.Serializer.cs" />
     <Compile Include="DynamicAssetArray.cs" />
     <Compile Include="IDynamicAssetBase.cs" />
     <Compile Include="DynamicAssetDictionary.cs" />

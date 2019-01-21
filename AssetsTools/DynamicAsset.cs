@@ -7,7 +7,12 @@ using System.Dynamic;
 
 namespace AssetsTools {
     public partial class DynamicAsset : DynamicObject, IDynamicAssetBase {
-        private Dictionary<string, object> objects;
+#if DEBUG
+        public
+#else
+        internal
+#endif
+            Dictionary<string, object> objects;
         private string proto_name;
 
         public string TypeName => proto_name;
@@ -47,6 +52,8 @@ namespace AssetsTools {
             objects[binder.Name] = value;
             return true;
         }
+
+        public bool HasMember(string name) => objects.ContainsKey(name);
 
         public override int GetHashCode() {
             int hash = proto_name.GetHashCode();

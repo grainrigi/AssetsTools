@@ -12,6 +12,8 @@ namespace AssetsTools {
         private static ConstructorInfo DicStrObjCtor = typeof(Dictionary<string, object>).GetConstructor(new Type[] { typeof(int) });
         private static MethodInfo DicStrObjAdd = typeof(Dictionary<string, object>).GetMethod("Add", new Type[] { typeof(string), typeof(object) });
 
+        private static MethodInfo DicStrObjGetter = typeof(Dictionary<string, object>).GetProperty("Item").GetMethod;
+
         private static ConstructorInfo DynamicAssetCtor = typeof(DynamicAsset).GetConstructor(BindingFlags.InvokeMethod |
 #if DEBUG
             BindingFlags.Public
@@ -19,6 +21,13 @@ namespace AssetsTools {
             BindingFlags.NonPublic
 #endif
             | BindingFlags.Instance, null, new Type[] { typeof(Dictionary<string, object>), typeof(string) }, null);
+        private static FieldInfo DynamicAsset_objects = typeof(DynamicAsset).GetField("objects", BindingFlags.InvokeMethod |
+#if DEBUG
+            BindingFlags.Public 
+#else
+            BindingFlags.NonPublic
+#endif
+            | BindingFlags.Instance);
 
         private static ConstructorInfo DynamicAssetArrayCtor = typeof(DynamicAssetArray).GetConstructor(BindingFlags.InvokeMethod |
 #if DEBUG
@@ -35,11 +44,19 @@ namespace AssetsTools {
 #endif
             | BindingFlags.Instance);
 
+        private static MethodInfo Dispose = typeof(IDisposable).GetMethod("Dispose");
+
         private static MethodInfo ReadInt = typeof(UnityBinaryReader).GetMethod("ReadInt", Type.EmptyTypes);
         private static MethodInfo ReadString = typeof(UnityBinaryReader).GetMethod("ReadString", new Type[] { typeof(int) });
         private static MethodInfo ReadAlignedString = typeof(IOLibExtensions).GetMethod("ReadAlignedString");
         private static MethodInfo ReadValueArray = typeof(UnityBinaryReader).GetMethod("ReadValueArray", Type.EmptyTypes);
         private static MethodInfo AlignReader = typeof(IOLibExtensions).GetMethod("Align", new Type[] { typeof(UnityBinaryReader), typeof(int) });
+
+        private static MethodInfo WriteInt = typeof(UnityBinaryWriter).GetMethod("WriteInt", new Type[] { typeof(int) });
+        private static MethodInfo WriteString = typeof(UnityBinaryWriter).GetMethod("WriteString", new Type[] { typeof(string) });
+        private static MethodInfo WriteAlignedString = typeof(IOLibExtensions).GetMethod("WriteAlignedString");
+        private static MethodInfo WriteValueArray = typeof(UnityBinaryWriter).GetMethod("WriteValueArray");
+        private static MethodInfo AlignWriter = typeof(IOLibExtensions).GetMethod("Align", new Type[] { typeof(UnityBinaryWriter), typeof(int) });
 
         private static Dictionary<string, Type> PrimitiveTypeDic = new Dictionary<string, Type> {
             { "SInt8", typeof(sbyte) },
@@ -74,6 +91,20 @@ namespace AssetsTools {
             { typeof(bool), typeof(UnityBinaryReader).GetMethod("ReadBool", Type.EmptyTypes) },
             { typeof(float), typeof(UnityBinaryReader).GetMethod("ReadFloat", Type.EmptyTypes) },
             { typeof(double), typeof(UnityBinaryReader).GetMethod("ReadDouble", Type.EmptyTypes) },
+        };
+
+        private static Dictionary<Type, MethodInfo> PrimitiveWriterDic = new Dictionary<Type, MethodInfo> {
+            { typeof(sbyte), typeof(UnityBinaryWriter).GetMethod("WriteSByte", new Type[] { typeof(sbyte) }) },
+            { typeof(byte), typeof(UnityBinaryWriter).GetMethod("WriteByte", new Type[] { typeof(byte) }) },
+            { typeof(short), typeof(UnityBinaryWriter).GetMethod("WriteShort", new Type[] { typeof(short) }) },
+            { typeof(ushort), typeof(UnityBinaryWriter).GetMethod("WriteUShort", new Type[] { typeof(ushort) }) },
+            { typeof(int), typeof(UnityBinaryWriter).GetMethod("WriteInt", new Type[] { typeof(int) }) },
+            { typeof(uint), typeof(UnityBinaryWriter).GetMethod("WriteUInt", new Type[] { typeof(uint) }) },
+            { typeof(long), typeof(UnityBinaryWriter).GetMethod("WriteLong", new Type[] { typeof(long) }) },
+            { typeof(ulong), typeof(UnityBinaryWriter).GetMethod("WriteULong", new Type[] { typeof(ulong) }) },
+            { typeof(bool), typeof(UnityBinaryWriter).GetMethod("WriteBool", new Type[] { typeof(bool) }) },
+            { typeof(float), typeof(UnityBinaryWriter).GetMethod("WriteFloat", new Type[] { typeof(float) }) },
+            { typeof(double), typeof(UnityBinaryWriter).GetMethod("WriteDouble", new Type[] { typeof(double) }) },
         };
 
         private static Dictionary<string, Type> KnownTypeDic = new Dictionary<string, Type> {
