@@ -30,7 +30,7 @@ namespace AssetsTools {
             int object_count = reader.ReadInt();
             Objects = new ObjectType[object_count];
             for(int i = 0; i < object_count; i++) {
-                Objects[i].parent.SetTarget(this);
+                Objects[i].parent = new WeakReference<AssetsFile>(this);
 
                 reader.Align(4);
                 Objects[i].PathID = reader.ReadLong();
