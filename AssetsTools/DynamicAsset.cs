@@ -66,6 +66,12 @@ namespace AssetsTools {
         /// <returns></returns>
         public bool HasMember(string name) => objects.ContainsKey(name);
 
+        /// <summary>
+        /// Cast to dynamic(equivalent of (dynamic)this)
+        /// </summary>
+        /// <returns></returns>
+        public dynamic AsDynamic() => this;
+
         public override int GetHashCode() {
             int hash = proto_name.GetHashCode();
             foreach (var kv in objects) {
