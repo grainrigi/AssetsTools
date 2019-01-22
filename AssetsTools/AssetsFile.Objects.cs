@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace AssetsTools {
     public partial class AssetsFile {
         public struct ObjectType {
-            public WeakReference<AssetsFile> parent;
+            internal WeakReference<AssetsFile> parent;
 
             public long PathID;
             public byte[] Data;

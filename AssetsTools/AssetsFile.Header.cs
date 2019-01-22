@@ -33,7 +33,7 @@ namespace AssetsTools {
                 writer.WriteBytes(Reserved, 0, 3);
             }
 
-            public int CalcSize() {
+            internal int CalcSize() {
                 return 4 + 4 + 4 + 4
                     + 1 + 3;
             }

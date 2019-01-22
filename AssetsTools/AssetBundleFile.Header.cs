@@ -19,7 +19,7 @@ namespace AssetsTools
 
             public long bundleSize;
 
-            public long CalcSize() {
+            internal long CalcSize() {
                 return signature.Length + 1
                     + 4 //format
                     + versionPlayer.Length + 1

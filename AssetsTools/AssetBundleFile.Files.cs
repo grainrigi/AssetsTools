@@ -10,7 +10,7 @@ namespace AssetsTools {
             public string Name; // Only ASCII characters are allowed
             public byte[] Data;
 
-            public int CalcInfoSize() {
+            internal int CalcInfoSize() {
                 return 8 + 8 + 4 + Name.Length + 1;
             }
         }
