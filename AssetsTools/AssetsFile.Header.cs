@@ -6,13 +6,37 @@ using System.Threading.Tasks;
 
 namespace AssetsTools {
     public partial class AssetsFile {
+        /// <summary>
+        /// Header of AssetsFile.
+        /// </summary>
         public struct HeaderType : ISerializable {
+            /// <summary>
+            /// Size of metadata.
+            /// </summary>
+            /// <remarks>You don't need to set this field by yourself.</remarks>
             public int MetadataSize;
+            /// <summary>
+            /// Size of AssetsFile.
+            /// </summary>
+            /// <remarks>You don't need to set this field by yourself.</remarks>
             public int FileSize;
+            /// <summary>
+            /// Version of AssetsFile.
+            /// </summary>
             public int Version;
+            /// <summary>
+            /// Start offset of data.
+            /// </summary>
+            /// <remarks>You don't need to set this field by yourself.</remarks>
             public int DataOffset;
             // version >= 9
+            /// <summary>
+            /// Whether file uses bigendian.
+            /// </summary>
             public bool IsBigEndian;
+            /// <summary>
+            /// Reserved bytes.
+            /// </summary>
             public byte[] Reserved;
 
             public void Read(UnityBinaryReader reader) {

@@ -5,6 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace AssetsTools {
+    /// <summary>
+    /// Dictionary contained in DynamicAsset.
+    /// </summary>
+    /// <typeparam name="TKey">Type of Key.</typeparam>
+    /// <typeparam name="TValue">Type of Value.</typeparam>
     public class DynamicAssetDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IDynamicAssetBase {
         private string key_proto_name;
         private string value_proto_name;

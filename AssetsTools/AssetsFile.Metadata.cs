@@ -7,8 +7,17 @@ using System.Threading.Tasks;
 namespace AssetsTools {
     public partial class AssetsFile {
         public struct MetadataHeaderType : ISerializable {
+            /// <summary>
+            /// Version of UnityEngine
+            /// </summary>
             public string UnityVersion; // version >= 7
+            /// <summary>
+            /// Target platform of this file. (<see cref="BuildTarget"/>)
+            /// </summary>
             public int TargetPlatform; // version >= 8
+            /// <summary>
+            /// If typetree is enabled.
+            /// </summary>
             public bool EnableTypeTree; // version >= 13
 
             public void Read(UnityBinaryReader reader) {

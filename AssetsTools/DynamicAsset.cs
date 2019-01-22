@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using System.Dynamic;
 
 namespace AssetsTools {
+    /// <summary>
+    /// Dynamic Asset Object.
+    /// </summary>
     public partial class DynamicAsset : DynamicObject, IDynamicAssetBase {
 #if DEBUG
         public
@@ -15,6 +18,9 @@ namespace AssetsTools {
             Dictionary<string, object> objects;
         private string proto_name;
 
+        /// <summary>
+        /// TypeName(Path) of this object.
+        /// </summary>
         public string TypeName => proto_name;
 
         public DynamicAsset() {
@@ -53,6 +59,11 @@ namespace AssetsTools {
             return true;
         }
 
+        /// <summary>
+        /// Determines whether this object has the specified member.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public bool HasMember(string name) => objects.ContainsKey(name);
 
         public override int GetHashCode() {
@@ -63,6 +74,10 @@ namespace AssetsTools {
             return hash;
         }
 
+        /// <summary>
+        /// Get the Prototype of this object.
+        /// </summary>
+        /// <returns></returns>
         public DynamicAsset GetPrototype() {
             return PrototypeDic[proto_name];
         }

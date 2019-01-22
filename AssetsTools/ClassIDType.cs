@@ -5,6 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace AssetsTools {
+    /// <summary>
+    /// Defines Object Type.
+    /// </summary>
     public enum ClassIDType {
         UnknownType = -1,
         Object = 0,

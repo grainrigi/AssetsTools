@@ -5,12 +5,27 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace AssetsTools {
+    /// <summary>
+    /// Type Information of Asset Object.
+    /// </summary>
     public struct SerializedType : ISerializable {
+        /// <summary>
+        /// ID of the class.(<see cref="ClassIDType"/>)
+        /// </summary>
         public int ClassID;
         public bool IsStrippedType; // version >= 16
         public short ScriptTypeIndex; // version >= 17
+        /// <summary>
+        /// ID of MonoBehaviour Type.
+        /// </summary>
         public byte[] ScriptID;
+        /// <summary>
+        /// Hash of the type.
+        /// </summary>
         public byte[] OldTypeHash;
+        /// <summary>
+        /// TypeTree of the type.
+        /// </summary>
         public TypeTree TypeTree;
 
         public void Read(UnityBinaryReader reader) {

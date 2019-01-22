@@ -6,8 +6,18 @@ using System.Threading.Tasks;
 
 namespace AssetsTools {
     public partial class AssetBundleFile {
+        /// <summary>
+        /// File Entry of AssetBundle
+        /// </summary>
         public struct FileType {
-            public string Name; // Only ASCII characters are allowed
+            /// <summary>
+            /// Name of file.
+            /// </summary>
+            /// <remarks>Only ASCII characters are allowed.</remarks>
+            public string Name;
+            /// <summary>
+            /// Content of file.
+            /// </summary>
             public byte[] Data;
 
             internal int CalcInfoSize() {

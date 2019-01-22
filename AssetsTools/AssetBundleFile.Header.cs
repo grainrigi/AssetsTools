@@ -10,13 +10,32 @@ namespace AssetsTools
     {
         public const int FORMAT = 6;
 
+        /// <summary>
+        /// Header of AssetBundle.
+        /// </summary>
         public struct HeaderType : ISerializable {
+            /// <summary>
+            /// Signature of AssetBundle. (Unity***)
+            /// </summary>
             public string signature;
             
+            /// <summary>
+            /// Version of AssetBundle format.
+            /// </summary>
             public int format;
+            /// <summary>
+            /// Major Version of Player.
+            /// </summary>
             public string versionPlayer;
+            /// <summary>
+            /// Version of UnityEngine.
+            /// </summary>
             public string versionEngine;
 
+            /// <summary>
+            /// Byte size of AssetBundle file.
+            /// </summary>
+            /// <remarks>You don't need to set this field by yourself.</remarks>
             public long bundleSize;
 
             internal long CalcSize() {

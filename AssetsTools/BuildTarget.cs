@@ -5,6 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace AssetsTools {
+    /// <summary>
+    /// Defines Target Platform.
+    /// </summary>
     public enum BuildTarget {
         DashboardWidget = 1,
         StandaloneOSX = 2,

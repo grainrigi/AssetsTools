@@ -5,6 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace AssetsTools {
+    /// <summary>
+    /// Array of DynamicAsset.
+    /// </summary>
     public class DynamicAssetArray : IDynamicAssetBase {
         private string proto_name;
 
@@ -27,6 +30,11 @@ namespace AssetsTools {
             proto_name = protoname;
         }
 
+        /// <summary>
+        /// Gets the element of this array.
+        /// </summary>
+        /// <param name="index">Index of the element to operate.</param>
+        /// <exception cref="ArrayTypeMismatchException">Given DynamicAsset type does not match the type of element.</exception>
         public IDynamicAssetBase this[int index] {
             get {
                 return elems[index];
@@ -38,14 +46,27 @@ namespace AssetsTools {
             }
         }
 
+        /// <summary>
+        /// Gets the Prototype of this array.
+        /// </summary>
+        /// <returns>Prototype of this array.</returns>
         public DynamicAssetArray GetPrototype() {
             return new DynamicAssetArray(0, proto_name);
         }
 
+        /// <summary>
+        /// Gets the Prototype of element of this array.
+        /// </summary>
+        /// <returns>Prototype of element.</returns>
         public DynamicAsset GetElementPrototype() {
             return DynamicAsset.PrototypeDic[proto_name];
         }
 
+        /// <summary>
+        /// Resizes this array.
+        /// </summary>
+        /// <remarks>If the specified size is less than the current size, the overflown part will be lost.</remarks>
+        /// <param name="length">New size of the array.</param>
         public void Resize(int length) {
             DynamicAsset[] newarr = new DynamicAsset[length];
             Array.Copy(elems, newarr, length > elems.Length ? length : elems.Length);

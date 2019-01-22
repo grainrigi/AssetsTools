@@ -23,6 +23,9 @@ namespace AssetsTools {
         }
     }
 
+    /// <summary>
+    /// The Exception that is thrown when the file format is unknown.
+    /// </summary>
     public class UnknownFormatException : Exception {
         public UnknownFormatException() { }
         public UnknownFormatException(string message) : base(message) { }

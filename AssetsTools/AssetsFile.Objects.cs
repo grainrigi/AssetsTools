@@ -6,11 +6,23 @@ using System.Threading.Tasks;
 
 namespace AssetsTools {
     public partial class AssetsFile {
+        /// <summary>
+        /// Object entry of AssetsFile.
+        /// </summary>
         public struct ObjectType {
             internal WeakReference<AssetsFile> parent;
 
+            /// <summary>
+            /// PathID of this object.
+            /// </summary>
             public long PathID;
+            /// <summary>
+            /// Content of this object.
+            /// </summary>
             public byte[] Data;
+            /// <summary>
+            /// Type index of this object.
+            /// </summary>
             public int TypeID;
         }
 

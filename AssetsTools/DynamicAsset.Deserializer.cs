@@ -8,6 +8,11 @@ using System.Reflection.Emit;
 
 namespace AssetsTools {
     public partial class DynamicAsset {
+        /// <summary>
+        /// Generates Deserializer accoding to the specified TypeTree nodes.
+        /// </summary>
+        /// <param name="nodes">Nodes of the TypeTree.</param>
+        /// <returns>Generated Deserializer function.</returns>
         public static Func<UnityBinaryReader, DynamicAsset> GenDeserializer(TypeTree.Node[] nodes) {
             DynamicMethod method = new DynamicMethod(nodes[0].Type, typeof(DynamicAsset), new Type[] { typeof(UnityBinaryReader) }, m: typeof(DynamicAssetArray).Module, skipVisibility: true);
 

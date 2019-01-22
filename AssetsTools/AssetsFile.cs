@@ -5,14 +5,38 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace AssetsTools {
+    /// <summary>
+    /// Unity3d aggregated assets file.
+    /// </summary>
     public partial class AssetsFile : ISerializable {
+        /// <summary>
+        /// Header of this file.
+        /// </summary>
         public HeaderType Header;
 
+        /// <summary>
+        /// Header of metadata.
+        /// </summary>
         public MetadataHeaderType MetadataHeader;
+        /// <summary>
+        /// Types used in this file.
+        /// </summary>
         public SerializedType[] Types;
+        /// <summary>
+        /// Objects contained in this file.
+        /// </summary>
         public ObjectType[] Objects;
+        /// <summary>
+        /// Script Entries of this file.
+        /// </summary>
         public ScriptIdentifierType[] Scripts;
+        /// <summary>
+        /// External file entries of this file.
+        /// </summary>
         public ExternalFileType[] Externals;
+        /// <summary>
+        /// Userinformation of this file.
+        /// </summary>
         public string UserInformation;
 
         public void Read(UnityBinaryReader reader) {

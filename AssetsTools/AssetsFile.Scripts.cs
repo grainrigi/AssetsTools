@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace AssetsTools {
     public partial class AssetsFile {
+        /// <summary>
+        /// Script Identifier for AssetsFile.
+        /// </summary>
         public struct ScriptIdentifierType : ISerializable {
             public int Index;
             public long Identifier;

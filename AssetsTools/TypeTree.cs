@@ -5,9 +5,18 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace AssetsTools {
+    /// <summary>
+    /// TypeTree of the SerializedType.
+    /// </summary>
     public partial class TypeTree : ISerializable {
+        /// <summary>
+        /// TypeTreeNodes of this TypeTree.
+        /// </summary>
         public Node[] Nodes;
 
+        /// <summary>
+        /// Node of TypeTree.
+        /// </summary>
         public struct Node {
             public ushort Version;
             public byte Level;

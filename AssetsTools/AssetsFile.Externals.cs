@@ -6,9 +6,21 @@ using System.Threading.Tasks;
 
 namespace AssetsTools {
     public partial class AssetsFile {
+        /// <summary>
+        /// External file entry of AssetsFile.
+        /// </summary>
         public struct ExternalFileType : ISerializable {
+            /// <summary>
+            /// GUID of the file.
+            /// </summary>
             public Guid Guid;
+            /// <summary>
+            /// Type of the file.
+            /// </summary>
             public int Type;
+            /// <summary>
+            /// Path to the file.
+            /// </summary>
             public string PathName;
 
             public void Read(UnityBinaryReader reader) {
