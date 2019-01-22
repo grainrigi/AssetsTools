@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 namespace AssetsTools {
     public partial class AssetsFile {
         public struct ObjectType {
+            public WeakReference<AssetsFile> parent;
+
             public long PathID;
             public byte[] Data;
             public int TypeID;
@@ -16,6 +18,8 @@ namespace AssetsTools {
             int object_count = reader.ReadInt();
             Objects = new ObjectType[object_count];
             for(int i = 0; i < object_count; i++) {
+                Objects[i].parent.SetTarget(this);
+
                 reader.Align(4);
                 Objects[i].PathID = reader.ReadLong();
                 var byteStart = reader.ReadUInt();
