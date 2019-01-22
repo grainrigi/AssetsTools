@@ -12,6 +12,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IOLibTest", "IOLibTest\IOLi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IOLibProfiler", "IOLibProfiler\IOLibProfiler.csproj", "{D960224C-6F58-41CA-8A08-ADB282962DAC}"
 	ProjectSection(ProjectDependencies) = postProject
+		{C692495B-2B2B-4373-BF6A-74F5F5F323CA} = {C692495B-2B2B-4373-BF6A-74F5F5F323CA}
 		{4630CBD0-DB06-4A84-8BE2-D614761D5883} = {4630CBD0-DB06-4A84-8BE2-D614761D5883}
 	EndProjectSection
 EndProject
@@ -20,6 +21,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lz4Codec", "Lz4Codec\Lz4Codec.csproj", "{C692495B-2B2B-4373-BF6A-74F5F5F323CA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AssetsTools", "AssetsTools\AssetsTools.csproj", "{7C861AA2-404B-46FD-A4CE-6E494BBBFB00}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A13A4043-0B5C-482F-94C9-C6185C1DC7E3} = {A13A4043-0B5C-482F-94C9-C6185C1DC7E3}
+		{4630CBD0-DB06-4A84-8BE2-D614761D5883} = {4630CBD0-DB06-4A84-8BE2-D614761D5883}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
