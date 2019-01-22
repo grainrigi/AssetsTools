@@ -60,7 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Lz4Codec\Lz4Codec.csproj">
-      <Project>{ebe17353-6bdb-4998-9101-cd6c6c945505}</Project>
+      <Project>{c692495b-2b2b-4373-bf6a-74f5f5f323ca}</Project>
       <Name>Lz4Codec</Name>
     </ProjectReference>
   </ItemGroup>

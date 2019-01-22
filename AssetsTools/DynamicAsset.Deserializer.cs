@@ -17,7 +17,7 @@ namespace AssetsTools {
             return (Func<UnityBinaryReader, DynamicAsset>)method.CreateDelegate(typeof(Func<UnityBinaryReader, DynamicAsset>));
         }
 
-#if DEBUG
+#if DEBUG && NET45
         private static AssemblyName _desname;
         private static AssemblyBuilder _desassembly = null;
         private static ModuleBuilder _desmodule;

@@ -55,7 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AssetsTools\AssetsTools.csproj">
-      <Project>{44c5f581-ee28-408b-b5dc-aac904644436}</Project>
+      <Project>{7c861aa2-404b-46fd-a4ce-6e494bbbfb00}</Project>
       <Name>AssetsTools</Name>
     </ProjectReference>
   </ItemGroup>

@@ -1,97 +1,22 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{44C5F581-EE28-408B-B5DC-AAC904644436}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AssetsTools</RootNamespace>
-    <AssemblyName>AssetsTools</AssemblyName>
-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <Deterministic>true</Deterministic>
-    <TargetFrameworkProfile />
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="IOLib, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Lz4Codec\Lz4Codec.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="IOLib">
       <HintPath>..\library\IOLib.dll</HintPath>
     </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Numerics.Vectors" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="AssetBundleFile.Files.cs" />
-    <Compile Include="AssetBundleFile.cs" />
-    <Compile Include="AssetsFile.cs" />
-    <Compile Include="AssetsFile.Externals.cs" />
-    <Compile Include="AssetsFile.Header.cs" />
-    <Compile Include="AssetsFile.Metadata.cs" />
-    <Compile Include="AssetsFile.Objects.cs" />
-    <Compile Include="AssetsFile.Scripts.cs" />
-    <Compile Include="BuildTarget.cs" />
-    <Compile Include="ClassIDType.cs" />
-    <Compile Include="Color4.cs" />
-    <Compile Include="DynamicAsset.Cache.cs" />
-    <Compile Include="DynamicAsset.Deserializer.cs" />
-    <Compile Include="DynamicAsset.CodeGen.cs" />
-    <Compile Include="DynamicAsset.cs" />
-    <Compile Include="DynamicAsset.Serializer.cs" />
-    <Compile Include="DynamicAssetArray.cs" />
-    <Compile Include="IDynamicAssetBase.cs" />
-    <Compile Include="DynamicAssetDictionary.cs" />
-    <Compile Include="ILGeneratorExtension.cs" />
-    <Compile Include="IOLibExtensions.cs" />
-    <Compile Include="ISerializable.cs" />
-    <Compile Include="MemoryPool.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SerializedType.cs" />
-    <Compile Include="TypeExtensions.cs" />
-    <Compile Include="TypeTree.CommonString.cs" />
-    <Compile Include="TypeTree.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="AssetBundleFile.Header.cs" />
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Lz4Codec\Lz4Codec.csproj">
-      <Project>{ebe17353-6bdb-4998-9101-cd6c6c945505}</Project>
-      <Name>Lz4Codec</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
-  </PropertyGroup>
+
 </Project>
