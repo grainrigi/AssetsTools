@@ -17,7 +17,7 @@ namespace AssetsTools {
             return (Action<UnityBinaryWriter, DynamicAsset>)method.CreateDelegate(typeof(Action<UnityBinaryWriter, DynamicAsset>));
         }
 
-#if DEBUG && NET45
+#if DEBUG && NET461
         private static AssemblyName _sername;
         private static AssemblyBuilder _serassembly = null;
         private static ModuleBuilder _sermodule;
