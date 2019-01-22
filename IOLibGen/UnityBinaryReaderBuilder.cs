@@ -1207,7 +1207,7 @@ namespace IOLibGen {
             il.Emit(OpCodes.Ldarg_2);
 
             il.Emit(OpCodes.Call,
-                typeof(AssetsTools.LZ4.LZ4Codec).GetMethod("Decode64Unsafe"));
+                typeof(AssetsTools.LZ4.LZ4Codec).GetMethod("Decode"));
 
             // offset += compressed_size;
             il.Emit(OpCodes.Ldarg_0);

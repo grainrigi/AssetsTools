@@ -215,7 +215,7 @@ namespace AssetsTools {
                     }
                     if (remainlength > 0) { // Process last block
                         blockinfos[curblock].compressedSize =
-                                LZ4.LZ4Codec.Encode64Unsafe(boundarybuf, 0, remainlength,
+                                LZ4.LZ4Codec.Encode(boundarybuf, 0, remainlength,
                                     compbuf, curblock * BLOCK_SIZE, remainlength);
                         // If compression is no use, just copy
                         if (blockinfos[curblock].compressedSize == 0) {
@@ -270,7 +270,7 @@ namespace AssetsTools {
         }
 
         private int TryLZ4Compress(byte[] src, int srcOffset, byte[] dest, int destOffset, int length) {
-            int compsize = LZ4.LZ4Codec.Encode64Unsafe(src, srcOffset, length, dest, destOffset, length - 1);
+            int compsize = LZ4.LZ4Codec.Encode(src, srcOffset, length, dest, destOffset, length - 1);
             // If compression is no use, just copy
             if (compsize == 0) {
                 Buffer.BlockCopy(src, srcOffset, dest, destOffset, length);
