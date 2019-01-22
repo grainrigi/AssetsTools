@@ -10,7 +10,13 @@ namespace AssetsTools {
 
         private static Dictionary<int, Func<UnityBinaryReader, DynamicAsset>> _deserializerCache = new Dictionary<int, Func<UnityBinaryReader, DynamicAsset>>();
         private static Dictionary<int, Func<UnityBinaryReader, DynamicAsset>> _monodeserializerCache = new Dictionary<int, Func<UnityBinaryReader, DynamicAsset>>();
-        internal static Func<UnityBinaryReader, DynamicAsset> GetDeserializer(SerializedType type) {
+
+        /// <summary>
+        /// Get deserializer for the specified type.
+        /// </summary>
+        /// <param name="type">Type to deserialize.</param>
+        /// <returns>Deserializer for the type.</returns>
+        public static Func<UnityBinaryReader, DynamicAsset> GetDeserializer(SerializedType type) {
             var dic = _deserializerCache;
             int id = type.ClassID;
             if(type.ClassID == (int)ClassIDType.MonoBehaviour) {
@@ -29,7 +35,13 @@ namespace AssetsTools {
 
         private static Dictionary<int, Action<UnityBinaryWriter, DynamicAsset>> _serializerCache = new Dictionary<int, Action<UnityBinaryWriter, DynamicAsset>>();
         private static Dictionary<int, Action<UnityBinaryWriter, DynamicAsset>> _monoserializerCache = new Dictionary<int, Action<UnityBinaryWriter, DynamicAsset>>();
-        internal static Action<UnityBinaryWriter, DynamicAsset> GetSerializer(SerializedType type) {
+
+        /// <summary>
+        /// Get serializer for the specified type.
+        /// </summary>
+        /// <param name="type">Type to serialize.</param>
+        /// <returns>Serializer for the type.</returns>
+        public static Action<UnityBinaryWriter, DynamicAsset> GetSerializer(SerializedType type) {
             var dic = _serializerCache;
             int id = type.ClassID;
             if(type.ClassID == (int)ClassIDType.MonoBehaviour) {
