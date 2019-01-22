@@ -26,6 +26,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AssetsTools", "AssetsTools\
 		{4630CBD0-DB06-4A84-8BE2-D614761D5883} = {4630CBD0-DB06-4A84-8BE2-D614761D5883}
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IOLib", "IOLib\IOLib.csproj", "{6139561E-62D1-4E7F-ABD8-ACC1EA168857}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,6 +58,10 @@ Global
 		{7C861AA2-404B-46FD-A4CE-6E494BBBFB00}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C861AA2-404B-46FD-A4CE-6E494BBBFB00}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C861AA2-404B-46FD-A4CE-6E494BBBFB00}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6139561E-62D1-4E7F-ABD8-ACC1EA168857}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6139561E-62D1-4E7F-ABD8-ACC1EA168857}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6139561E-62D1-4E7F-ABD8-ACC1EA168857}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6139561E-62D1-4E7F-ABD8-ACC1EA168857}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
