@@ -7,10 +7,15 @@ using AssetsTools;
 namespace IOLibTest {
     [TestClass]
     public class UnityBinaryReaderTest {
+        private struct TestStruct {
+            public int a;
+            public int b;
+        }
+
         private static byte[] TestData =
             new byte[8] { 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF };
         private static byte[] TestArray =
-            new byte[12] { 0x08, 0x00, 0x00, 0x00,
+            new byte[12] { 0x01, 0x00, 0x00, 0x00,
                 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF };
 
         private const float TestFloat = 0.133333333333f;
@@ -309,9 +314,10 @@ namespace IOLibTest {
         public void ReadValueArray() {
             UnityBinaryReader r = new UnityBinaryReader(TestArray);
 
-            byte[] read = r.ReadValueArray<byte>();
-            for (int i = 0; i < 8; i++)
-                Assert.AreEqual<byte>(TestData[i], read[i]);
+            TestStruct[] read = r.ReadValueArray<TestStruct>();
+            Assert.AreEqual<int>(unchecked(0x67452301), read[0].a);
+            Assert.AreEqual<int>(unchecked((int)0xEFCDAB89), read[0].b);
+            Assert.AreEqual<long>(1L, read.LongLength);
             // Forward Test
             Assert.ThrowsException<IndexOutOfRangeException>(delegate () { r.ReadByte(); });
         }
