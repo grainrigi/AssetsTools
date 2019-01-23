@@ -4,7 +4,7 @@ namespace AssetsTools.LZ4
 {
     public static partial class LZ4Codec
     {
-#if NETSTANDARD
+#if ENABLE_UNSAFE
 
         public static int Encode(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int outputLength)
         {
