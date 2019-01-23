@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.IO;
 
 namespace AssetsTools {
     public partial class AssetBundleFile {
@@ -24,6 +25,15 @@ namespace AssetsTools {
             AssetBundleFile bundle = new AssetBundleFile();
             bundle.Read(new UnityBinaryReader(bin));
             return bundle;
+        }
+
+        public void SaveToFile(string filename) {
+            UnityBinaryWriter w = new UnityBinaryWriter();
+            Write(w);
+            using(FileStream fs = new FileStream(filename, FileMode.Create)) {
+                byte[] b = w.ToBytes();
+                fs.Write(b, 0, b.Length);
+            }
         }
     }
 }
