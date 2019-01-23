@@ -372,7 +372,7 @@ namespace AssetsTools {
                         throw new IndexOutOfRangeException();
                     }
                 }
-                length = (int)(ptr - p);
+                length = (int)(ptr - p) - offset;
                 @string = Encoding.UTF8.GetString(file, offset, length);
                 offset = length + 1 + offset;
                 return @string;
