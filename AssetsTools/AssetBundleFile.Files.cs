@@ -9,7 +9,7 @@ namespace AssetsTools {
         /// <summary>
         /// File Entry of AssetBundle
         /// </summary>
-        public struct FileType {
+        public class FileType {
             /// <summary>
             /// Name of file.
             /// </summary>
@@ -73,6 +73,7 @@ namespace AssetsTools {
             Files = new FileType[filecount];
             long[] fileoffsets = new long[filecount];
             for(int i = 0; i < filecount; i++) {
+                Files[i] = new FileType();
                 fileoffsets[i] = inforeader.ReadLongBE();
                 Files[i].Data = new byte[inforeader.ReadLongBE()];
                 flag = inforeader.ReadIntBE();

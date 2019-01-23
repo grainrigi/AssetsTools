@@ -9,7 +9,7 @@ namespace AssetsTools {
         /// <summary>
         /// Object entry of AssetsFile.
         /// </summary>
-        public struct ObjectType {
+        public class ObjectType {
             internal WeakReference<AssetsFile> parent;
 
             /// <summary>
@@ -30,6 +30,7 @@ namespace AssetsTools {
             int object_count = reader.ReadInt();
             Objects = new ObjectType[object_count];
             for(int i = 0; i < object_count; i++) {
+                Objects[i] = new ObjectType();
                 Objects[i].parent = new WeakReference<AssetsFile>(this);
 
                 reader.Align(4);
