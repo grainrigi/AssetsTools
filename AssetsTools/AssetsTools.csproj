@@ -2,21 +2,16 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Lz4Codec\Lz4Codec.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="IOLib">
-      <HintPath>..\library\IOLib.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>

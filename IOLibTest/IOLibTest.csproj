@@ -57,13 +57,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\IOLib\IOLib.csproj">
-      <Project>{6139561e-62d1-4e7f-abd8-acc1ea168857}</Project>
-      <Name>IOLib</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Lz4Codec\Lz4Codec.csproj">
-      <Project>{c692495b-2b2b-4373-bf6a-74f5f5f323ca}</Project>
-      <Name>Lz4Codec</Name>
+    <ProjectReference Include="..\AssetsTools\AssetsTools.csproj">
+      <Project>{7c861aa2-404b-46fd-a4ce-6e494bbbfb00}</Project>
+      <Name>AssetsTools</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
