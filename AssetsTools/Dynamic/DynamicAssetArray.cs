@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AssetsTools {
+namespace AssetsTools.Dynamic {
     /// <summary>
     /// Array of DynamicAsset.
     /// </summary>

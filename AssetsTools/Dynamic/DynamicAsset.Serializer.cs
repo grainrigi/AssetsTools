@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace AssetsTools {
+namespace AssetsTools.Dynamic {
     public partial class DynamicAsset {
         /// <summary>
         /// Generates Serializer accoding to the specified TypeTree nodes.

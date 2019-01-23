@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Dynamic;
 
-namespace AssetsTools {
+namespace AssetsTools.Dynamic {
     /// <summary>
     /// Dynamic Asset Object.
     /// </summary>
