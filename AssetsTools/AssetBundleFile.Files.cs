@@ -113,7 +113,7 @@ namespace AssetsTools {
             }
 
             // Seek Writer (Skip Info)
-            int infoheadersize = 4 + 4 + 4;
+            //int infoheadersize = 4 + 4 + 4;
             int blockinfosize = 0x10 + 4 + (4 + 4 + 2) * blockinfos.Length;
             int fileinfosize = 4 + Files.Sum(f => f.CalcInfoSize());
             int info_offset = writer.Position;

@@ -7,10 +7,12 @@ using AssetsTools;
 namespace IOLibTest {
     [TestClass]
     public class UnityBinaryReaderTest {
+#pragma warning disable CS0649
         private struct TestStruct {
             public int a;
             public int b;
         }
+#pragma warning restore CS0649
 
         private static byte[] TestData =
             new byte[8] { 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF };
