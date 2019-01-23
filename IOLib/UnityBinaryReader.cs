@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
-using System.Runtime.CompilerServices;
 
 namespace AssetsTools {
     public class UnityBinaryReader {
@@ -10,6 +9,19 @@ namespace AssetsTools {
         int offset = 0;
         int bound = 0;
         int start = 0;
+
+        public int Position {
+            get {
+                return offset - start;
+            }
+            set {
+                int num = value + start;
+                if (bound < num) {
+                    throw new IndexOutOfRangeException();
+                }
+                offset = num;
+            }
+        }
 
         #region Ctor
         public UnityBinaryReader(string filename) {
@@ -52,34 +64,32 @@ namespace AssetsTools {
         }
         #endregion
 
+        #region Slice
+        public UnityBinaryReader Slice(int offset, int length) {
+            return new UnityBinaryReader(file, offset, length);
+        }
+
+        public UnityBinaryReader Slice(int offset) {
+            return new UnityBinaryReader(file, offset, bound - offset);
+        }
+        #endregion
+
         #region Byte
         public byte ReadByte() {
-            int num = offset;
-            if (bound < num + 1) {
-                throw new IndexOutOfRangeException();
-            }
-            byte result = file[num];
-            offset = num + 1;
+            byte result = file[offset];
+            offset += 1;
             return result;
         }
 
         public sbyte ReadSByte() {
-            int num = offset;
-            if (bound < num + 1) {
-                throw new IndexOutOfRangeException();
-            }
-            byte result = file[num];
-            offset = num + 1;
+            byte result = file[offset];
+            offset += 1;
             return (sbyte)result;
         }
 
         public bool ReadBool() {
-            int num = offset;
-            if (bound < num + 1) {
-                throw new IndexOutOfRangeException();
-            }
-            bool result = file[num] != 0;
-            offset = num + 1;
+            bool result = file[offset] != 0;
+            offset += 1;
             return result;
         }
         #endregion
@@ -89,96 +99,80 @@ namespace AssetsTools {
             if (bound < offset + 2) {
                 throw new IndexOutOfRangeException();
             }
-            short result;
             fixed (byte* p = &file[offset]) {
-                result = *(short*)p;
                 offset += 2;
+                return *(short*)p;
             }
-            return result;
         }
 
         public unsafe int ReadInt() {
             if (bound < offset + 4) {
                 throw new IndexOutOfRangeException();
             }
-            int result;
             fixed (byte* p = &file[offset]) {
-                result = *(int*)p;
                 offset += 4;
+                return *(int*)p;
             }
-            return result;
         }
 
         public unsafe long ReadLong() {
             if (bound < offset + 8) {
                 throw new IndexOutOfRangeException();
             }
-            long result;
             fixed (byte* p = &file[offset]) {
-                result = *(long*)p;
                 offset += 8;
+                return *(long*)p;
             }
-            return result;
         }
 
         public unsafe float ReadFloat() {
             if (bound < offset + 4) {
                 throw new IndexOutOfRangeException();
             }
-            float result;
             fixed (byte* p = &file[offset]) {
-                result = *(float*)p;
                 offset += 4;
+                return *(float*)p;
             }
-            return result;
         }
 
         public unsafe double ReadDouble() {
             if (bound < offset + 8) {
                 throw new IndexOutOfRangeException();
             }
-            double result;
             fixed (byte* p = &file[offset]) {
-                result = *(double*)p;
                 offset += 8;
+                return *(double*)p;
             }
-            return result;
         }
 
         public unsafe ushort ReadUShort() {
             if (bound < offset + 2) {
                 throw new IndexOutOfRangeException();
             }
-            ushort result;
             fixed (byte* p = &file[offset]) {
-                result = *(ushort*)p;
                 offset += 2;
+                return *(ushort*)p;
             }
-            return result;
         }
 
         public unsafe uint ReadUInt() {
             if (bound < offset + 4) {
                 throw new IndexOutOfRangeException();
             }
-            uint result;
             fixed (byte* p = &file[offset]) {
-                result = *(uint*)p;
                 offset += 4;
+                return *(uint*)p;
             }
-            return result;
         }
 
         public unsafe ulong ReadULong() {
             if (bound < offset + 8) {
                 throw new IndexOutOfRangeException();
             }
-            ulong result;
             fixed (byte* p = &file[offset]) {
-                result = *(ulong*)p;
                 offset += 8;
+                return *(ulong*)p;
             }
-            return result;
         }
         #endregion
 
@@ -188,13 +182,13 @@ namespace AssetsTools {
                 throw new IndexOutOfRangeException();
             }
             short result = default(short);
-            fixed (byte* p = &file[offset]) {
-                byte* q = (byte*)&result;
+            fixed (byte* q = &file[offset]) {
+                byte* p = (byte*)&result;
                 p[0] = q[1];
                 p[1] = q[0];
+                offset +=  2;
+                return result;
             }
-            offset +=  2;
-            return result;
         }
 
         public unsafe int ReadIntBE() {
@@ -202,15 +196,15 @@ namespace AssetsTools {
                 throw new IndexOutOfRangeException();
             }
             int result = default(int);
-            fixed (byte* p = &file[offset]) {
-                byte* q = (byte*)&result;
+            fixed (byte* q = &file[offset]) {
+                byte* p = (byte*)&result;
                 p[0] = q[3];
                 p[1] = q[2];
                 p[2] = q[1];
                 p[3] = q[0];
+                offset += 4;
+                return result;
             }
-            offset += 4;
-            return result;
         }
 
         public unsafe long ReadLongBE() {
@@ -218,8 +212,8 @@ namespace AssetsTools {
                 throw new IndexOutOfRangeException();
             }
             long result = default(long);
-            fixed (byte* p = &file[offset]) {
-                byte* q = (byte*)&result;
+            fixed (byte* q = &file[offset]) {
+                byte* p = (byte*)&result;
                 p[0] = q[7];
                 p[1] = q[6];
                 p[2] = q[5];
@@ -228,9 +222,9 @@ namespace AssetsTools {
                 p[5] = q[2];
                 p[6] = q[1];
                 p[7] = q[0];
+                offset += 8;
+                return result;
             }
-            offset += 8;
-            return result;
         }
 
         public unsafe float ReadFloatBE() {
@@ -238,15 +232,15 @@ namespace AssetsTools {
                 throw new IndexOutOfRangeException();
             }
             float result = default(float);
-            fixed (byte* p = &file[offset]) {
-                byte* q = (byte*)&result;
+            fixed (byte* q = &file[offset]) {
+                byte* p = (byte*)&result;
                 p[0] = q[3];
                 p[1] = q[2];
                 p[2] = q[1];
                 p[3] = q[0];
+                offset += 4;
+                return result;
             }
-            offset += 4;
-            return result;
         }
 
         public unsafe double ReadDoubleBE() {
@@ -254,8 +248,8 @@ namespace AssetsTools {
                 throw new IndexOutOfRangeException();
             }
             double result = default(double);
-            fixed (byte* p = &file[offset]) {
-                byte* q = (byte*)&result;
+            fixed (byte* q = &file[offset]) {
+                byte* p = (byte*)&result;
                 p[0] = q[7];
                 p[1] = q[6];
                 p[2] = q[5];
@@ -264,9 +258,59 @@ namespace AssetsTools {
                 p[5] = q[2];
                 p[6] = q[1];
                 p[7] = q[0];
+                offset += 8;
+                return result;
             }
-            offset += 8;
-            return result;
+        }
+
+        public unsafe ushort ReadUShortBE() {
+            if (bound < offset + 2) {
+                throw new IndexOutOfRangeException();
+            }
+            ushort result = default(ushort);
+            fixed (byte* q = &file[offset]) {
+                byte* p = (byte*)&result;
+                p[0] = q[1];
+                p[1] = q[0];
+                offset += 2;
+                return result;
+            }
+        }
+
+        public unsafe uint ReadUIntBE() {
+            if (bound < offset + 4) {
+                throw new IndexOutOfRangeException();
+            }
+            uint result = default(uint);
+            fixed (byte* q = &file[offset]) {
+                byte* p = (byte*)&result;
+                p[0] = q[3];
+                p[1] = q[2];
+                p[2] = q[1];
+                p[3] = q[0];
+                offset += 4;
+                return result;
+            }
+        }
+
+        public unsafe ulong ReadULongBE() {
+            if (bound < offset + 8) {
+                throw new IndexOutOfRangeException();
+            }
+            ulong result;
+            fixed (byte* q = &file[offset]) {
+                byte* p = (byte*)&result;
+                p[0] = q[7];
+                p[1] = q[6];
+                p[2] = q[5];
+                p[3] = q[4];
+                p[4] = q[3];
+                p[5] = q[2];
+                p[6] = q[1];
+                p[7] = q[0];
+                offset += 8;
+                return result;
+            }
         }
         #endregion
 
@@ -284,12 +328,11 @@ namespace AssetsTools {
             if (length + this.offset > bound) {
                 throw new IndexOutOfRangeException();
             }
-            fixed (byte* p = &file[offset]) {
-                fixed (byte* q = &dest[offset]) {
-                    Buffer.MemoryCopy(p, q, length, length);
-                }
+            fixed (byte* p = &file[this.offset]) {
+            fixed (byte* q = &dest[offset])
+                Buffer.MemoryCopy(p, q, length, length);
+                this.offset += length;
             }
-            this.offset += length;
         }
 
         public byte[] ReadBytes(int length) {
@@ -329,38 +372,37 @@ namespace AssetsTools {
                         throw new IndexOutOfRangeException();
                     }
                 }
-                length = (int)(endptr - ptr);
+                length = (int)(ptr - p);
                 @string = Encoding.UTF8.GetString(file, offset, length);
+                offset = length + 1 + offset;
+                return @string;
             }
-            offset = length + 1 + offset;
-            return @string;
         }
 
-        public unsafe T[] ReadValueArray<T>() where T {
+        public unsafe T[] ReadValueArray<T>() where T : unmanaged {
             int num = ReadInt();
             if (num != 0) {
                 int num2;
-                T[] result;
+                T[] result = new T[num];
                 fixed (byte* p = &file[offset])
-                fixed (void* q = new TestStruct[2]) { 
-                    num2 =  Unsafe.SizeOf<T>() * ReadInt();
+                fixed (void* q = &result[0]) { 
+                    num2 =  sizeof(T) * result.Length;
                     if (num2 + offset > bound) {
                         throw new IndexOutOfRangeException();
                     }
-                    Buffer.MemoryCopy(p, &, num2, num2);
-                    result = array;
+                    Buffer.MemoryCopy(p, q, num2, num2);
+                    offset += (int)num2;
+                    return result;
                 }
-                offset += (int)num2;
-                return result;
             }
             return new T[0];
         }
 
-
         public int ReadLZ4Data(int compressed_size, int uncompressed_size, byte[] dest, int dest_offset) {
-            int result = LZ4Codec.Decode(file, offset, compressed_size, dest, dest_offset, uncompressed_size);
+            int result = LZ4.LZ4Codec.Decode(file, offset, compressed_size, dest, dest_offset, uncompressed_size);
             offset += compressed_size;
             return result;
+
         }
         #endregion
     }
