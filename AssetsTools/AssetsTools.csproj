@@ -9,6 +9,16 @@
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>ENABLE_UNSAFE</DefineConstants>
+    <Version>0.1.0</Version>
+    <Authors>grainrigi</Authors>
+    <Company />
+    <Product />
+    <Copyright>(c) 2019 Grain</Copyright>
+    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/grainrigi/AssetsTools</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/grainrigi/AssetsTools</RepositoryUrl>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <Description>Unity AssetBundle manipulation library for C#/.NET.</Description>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
