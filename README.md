@@ -8,6 +8,9 @@ This is an AssetBundle manipulation library for C# inspired by [Unity Asset Bund
 - Supports Storing Object to AssetsFile with the content of DynamicObject
 - Supports .NET 4.6.1/.NET Standard 2.0
 
+## Installation
+Use NuGet package. (AssetsTools by grainrigi)
+
 ## Examples
 #### Rewriting `m_IsReadable` flag of Texture2D
 
