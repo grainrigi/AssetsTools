@@ -24,7 +24,7 @@ public static class Program {
 		AssetsFile assets = bundle.Files[0].ToAssetsFile();
 		
 		// Rewrite Texture2D Objects
-		foreach(var obj in assets.ObjectsWithClass(ClassIDType.Texture2D) {
+		foreach(var obj in assets.ObjectsWithClass(ClassIDType.Texture2D)) {
 			DynamicAsset tex = obj.ToDynamicAsset();
 			tex.AsDynamic().m_IsReadable = true;
 			obj.LoadDynamicAsset(tex);
@@ -47,7 +47,7 @@ public static class Program {
 - .NET Core 2.0 (for netstandard2.0 build)
 	
 ### With VS2017
-Just load the AssetsTools.sln and build the whole solutions.
+Just load the AssetsTools.sln and build the whole solution.
 	
 ### With dotnet
 Just execute `dotnet build` in the root directory.
