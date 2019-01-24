@@ -9,7 +9,7 @@
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>ENABLE_UNSAFE</DefineConstants>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Authors>grainrigi</Authors>
     <Company />
     <Product />
